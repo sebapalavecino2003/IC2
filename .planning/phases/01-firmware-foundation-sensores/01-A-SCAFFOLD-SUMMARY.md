@@ -158,6 +158,13 @@ None — scaffold/config/HAL files contain no network endpoints, auth paths, or 
 - **Ready for 01-D-RTOS-INTEGRATION:** PlatformIO project compiles, main entry point exists for RTOS task integration.
 - All three scaffold requirements (FWK-01, FWK-02, FWK-03) are fulfilled.
 
+## Self-Check: PASSED
+
+- ✅ All 12 created files verified on disk
+- ✅ All 5 commits confirmed in git log
+- ✅ `pio run` succeeds for both `esp32dev` and `test` environments
+- ✅ Directory structure matches layered design (7 source directories)
+
 ---
 
 *Phase: 01-firmware-foundation-sensores*
