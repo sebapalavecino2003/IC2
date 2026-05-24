@@ -3,11 +3,11 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: unknown
-last_updated: "2026-05-24T23:41:34.512Z"
+last_updated: "2026-05-24T23:46:54.325Z"
 progress:
   total_phases: 6
   completed_phases: 0
-  total_plans: 0
+  total_plans: 4
   completed_plans: 0
   percent: 0
 ---
@@ -38,7 +38,7 @@ progress:
 See: `.planning/PROJECT.md` (updated 2026-05-24)
 
 **Core value:** Detectar condiciones ambientales peligrosas y actuar preventivamente antes de que escalen a emergencias, incluso sin conexión al servidor central.
-**Current focus:** Firmware foundation — PlatformIO project structure, HAL, sensor drivers, FreeRTOS.
+**Current focus:** Phase 01 — Firmware Foundation + Sensores
 
 ## Decisions Log
 
