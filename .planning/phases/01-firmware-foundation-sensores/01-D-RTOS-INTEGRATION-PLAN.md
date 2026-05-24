@@ -151,13 +151,14 @@ Write `src/managers/sensor_manager.h`:
   - `QueueHandle_t getReadingQueue()` — expose queue for consumers
   - Private: `DHT22Driver* dht22`, `MQ9Driver* mq9`, `KY026Driver* ky026`
   - Private: `SensorCalibration* cal_dht22`, `SensorCalibration* cal_mq9`, `SensorCalibration* cal_ky026`
-  - Private: `QueueHandle_t sensor_queue`, `SemaphoreHandle_t i2c_mutex`
+   - Private: `QueueHandle_t sensor_queue`, `SemaphoreHandle_t hw_mutex`
+   - Template: `template<typename T> T* getSensor()` — type-safe access to specific sensor
   - Private: `TaskHandle_t task_dht22`, `TaskHandle_t task_mq9`, `TaskHandle_t task_ky026`
   - Static task functions: `static void taskDHT22(void* pvParams)`, etc.
 
 Write `src/managers/sensor_manager.cpp`:
 - `init()`:
-  - Create i2c_mutex as `xSemaphoreCreateMutex()` (shared resource protection)
+  - Create hw_mutex as `xSemaphoreCreateMutex()` (shared GPIO/ADC resource protection)
   - Create sensor_queue with item size `sizeof(SensorReading)`, length 20
   - Instantiate DHT22Driver(PIN_DHT22)
   - Instantiate MQ9Driver(ADC1_CHANNEL_6, GPIO_NUM_18) — power pin
@@ -169,12 +170,17 @@ Write `src/managers/sensor_manager.cpp`:
   - `xTaskCreatePinnedToCore(taskKY026, "ky026_task", 2048, this, 4, &task_ky026, 1)` — priority 4 (critical)
 - `taskDHT22()`:
   - Loop with vTaskDelay(pdMS_TO_TICKS(SAMPLE_INTERVAL_DHT22_MS))
-  - Take i2c_mutex, call dht22->read(), give mutex
+  - Take hw_mutex, call dht22->read(), give mutex
   - Add to calibration
   - Send to queue: `xQueueSend(sensor_queue, &reading, portMAX_DELAY)`
 - `taskMQ9()`: similar, with SAMPLE_INTERVAL_MQ9_MS
 - `taskKY026()`: similar, with SAMPLE_INTERVAL_KY026_MS (prioritized due to interrupt)
 - `getLatestReading()`: return stored last reading per type
+- `getSensor<T>()` template implementation:
+  - `if constexpr (std::is_same_v<T, DHT22Driver>)` return `dht22`
+  - `if constexpr (std::is_same_v<T, MQ9Driver>)` return `mq9`
+  - `if constexpr (std::is_same_v<T, KY026Driver>)` return `ky026`
+  - Else `return nullptr` (SFINAE-friendly for unsupported types)
 
 Write `src/managers/task_manager.h`:
 - Class `TaskManager`:
@@ -192,10 +198,11 @@ Write `src/managers/task_manager.cpp`:
 <acceptance_criteria>
 - SensorManager creates all 3 sensor drivers
 - 3 FreeRTOS tasks created with correct priorities (4, 3, 2)
-- I2C mutex protects shared resource access
+- Mutex protects shared GPIO/ADC resource access
 - Queue passes SensorReading between tasks
 - DHT22 task runs every 2000ms, MQ-9 every 1000ms, KY-026 every 200ms
 - Task priorities: KY-026=4 (critical), MQ-9=3 (high), DHT22=2 (normal), monitor=1 (low)
+- `getSensor<DHT22Driver>()` returns dht22 pointer; `getSensor<MQ9Driver>()` returns mq9; `getSensor<KY026Driver>()` returns ky026
 - `pio run` compiles without errors
 </acceptance_criteria>
 
@@ -260,5 +267,5 @@ Rewrite `src/main.cpp`:
 - [x] 3 FreeRTOS sensor tasks running concurrently with correct priorities
 - [x] State machine transitions through all 6 states
 - [x] Queue-based communication between sensor tasks and main loop
-- [x] Mutex-protected I2C access
+- [x] Mutex-protected shared resource access
 - [x] Error detection and auto-recovery with exponential backoff

@@ -31,7 +31,7 @@ A developer can build and flash the firmware to an ESP32 and see formatted senso
 - [x] Calibration module — filtrado y estabilización de lecturas
 - [x] FreeRTOS tasks — una tarea por sensor con prioridades definidas
 - [x] FreeRTOS queues — comunicación entre tareas
-- [x] FreeRTOS mutex — protección de recursos compartidos (I2C)
+- [x] FreeRTOS mutex — protección de recursos compartidos (GPIO/ADC)
 - [x] State machine — init, standby, running, alert, error, recovery
 - [x] Error handling — watchdog, timeout, auto-recovery con backoff
 
