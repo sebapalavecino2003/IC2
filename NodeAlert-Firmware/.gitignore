@@ -6,6 +6,7 @@
 # ESP-IDF build artifacts
 build/
 sdkconfig
+sdkconfig.*
 sdkconfig.old
 sdkconfig.defaults
 managed_components/
