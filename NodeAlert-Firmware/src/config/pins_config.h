@@ -9,7 +9,7 @@
 #pragma once
 
 #include "driver/gpio.h"
-#include "driver/adc.h"
+/* ADC headers will be added when MQ-9/KY-026 drivers need them */
 
 /* ========================================================================== */
 /* DHT22 — Temperature and Humidity Sensor                                   */
