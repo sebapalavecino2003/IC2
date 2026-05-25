@@ -27,6 +27,7 @@
 /* ========================================================================== */
 #define PIN_KY026_DIGITAL       GPIO_NUM_5
 #define PIN_KY026_ANALOG        GPIO_NUM_35
+#define PIN_KY026_ADC_CHANNEL   ADC_CHANNEL_7      // GPIO 35 → ADC1_CH7
 
 /* ========================================================================== */
 /* Actuators                                                                  */
