@@ -7,6 +7,7 @@ networks:
 volumes:
   mosquitto_data:
   mosquitto_log:
+  mysql_data:
 
 services:
   mosquitto:
@@ -18,6 +19,29 @@ services:
       - ./mosquitto/config:/mosquitto/config:ro
       - mosquitto_data:/mosquitto/data
       - mosquitto_log:/mosquitto/log
+    networks:
+      - nodealert-net
+    restart: unless-stopped
+
+  django:
+    build: ./NodeAlert-Backend
+    container_name: django
+    env_file: .env
+    ports:
+      - "8000:8000"
+    depends_on:
+      - mysql
+      - mosquitto
+    networks:
+      - nodealert-net
+    restart: unless-stopped
+
+  mysql:
+    image: mysql:8.0
+    container_name: mysql
+    env_file: .env
+    volumes:
+      - mysql_data:/var/lib/mysql
     networks:
       - nodealert-net
     restart: unless-stopped

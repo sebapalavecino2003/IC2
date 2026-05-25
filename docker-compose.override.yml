@@ -3,3 +3,9 @@ version: "3.8"
 services:
   mosquitto:
     restart: "no"
+
+  django:
+    volumes:
+      - ./NodeAlert-Backend:/app
+    environment:
+      DJANGO_DEBUG: "True"
