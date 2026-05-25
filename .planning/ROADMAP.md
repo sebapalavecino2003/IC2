@@ -11,6 +11,15 @@
 
 **Mode:** mvp
 
+**Progress:** 3/4 plans complete (75%) — 2026-05-25
+
+| Plan | Status | Date |
+|------|--------|------|
+| 01-A-SCAFFOLD | ✅ Done | 2026-05-24 |
+| 01-B-DHT22 | ✅ Done | 2026-05-24 |
+| 01-C-MQ9-KY026 | ✅ Done | 2026-05-25 |
+| 01-D-RTOS-INTEGRATION | 🔲 Pending | — |
+
 **Requirements:**
 - FWK-01, FWK-02, FWK-03, FWK-04, FWK-05
 - DRV-01, DRV-02, DRV-03, DRV-04

@@ -9,18 +9,18 @@ Requirements for initial release. Each maps to a roadmap phase.
 
 ### Firmware — Arquitectura y Plataforma
 
-- [ ] **FWK-01**: Proyecto PlatformIO con estructura profesional separando `.h`/`.cpp` por módulos
-- [ ] **FWK-02**: Capa HAL (Hardware Abstraction Layer) para aislar drivers del hardware específico
-- [ ] **FWK-03**: Sistema de configuración centralizada (WiFi, MQTT, pines, umbrales)
-- [ ] **FWK-04**: Máquina de estados del sistema (init, running, error, sleep, alert)
+- [x] **FWK-01**: Proyecto PlatformIO con estructura profesional separando `.h`/`.cpp` por módulos
+- [x] **FWK-02**: Capa HAL (Hardware Abstraction Layer) para aislar drivers del hardware específico
+- [x] **FWK-03**: Sistema de configuración centralizada (WiFi, MQTT, pines, umbrales)
+- [x] **FWK-04**: Máquina de estados del sistema (init, running, error, sleep, alert)
 - [ ] **FWK-05**: Gestión de errores y recuperación con watchdog y reintentos
 
 ### Firmware — Drivers de Sensores
 
-- [ ] **DRV-01**: Driver modular para DHT22 (temperatura y humedad) con HAL
-- [ ] **DRV-02**: Driver modular para MQ-9 (gases inflamables y CO) con HAL
-- [ ] **DRV-03**: Driver modular para KY-026 (detección de llama) con HAL
-- [ ] **DRV-04**: Módulo de calibración y filtrado de lecturas de sensores
+- [x] **DRV-01**: Driver modular para DHT22 (temperatura y humedad) con HAL
+- [x] **DRV-02**: Driver modular para MQ-9 (gases inflamables y CO) con HAL
+- [x] **DRV-03**: Driver modular para KY-026 (detección de llama) con HAL
+- [x] **DRV-04**: Módulo de calibración y filtrado de lecturas de sensores
 
 ### Firmware — FreeRTOS y Tiempo Real
 
@@ -126,15 +126,15 @@ Explicitly excluded. Documented to prevent scope creep.
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| FWK-01 | Phase 1 | Pending |
-| FWK-02 | Phase 1 | Pending |
-| FWK-03 | Phase 1 | Pending |
-| FWK-04 | Phase 1 | Pending |
+| FWK-01 | Phase 1 | ✅ Complete (01-A-SCAFFOLD) |
+| FWK-02 | Phase 1 | ✅ Complete (01-A-SCAFFOLD) |
+| FWK-03 | Phase 1 | ✅ Complete (01-A-SCAFFOLD) |
+| FWK-04 | Phase 1 | ✅ Complete (01-B-DHT22) |
 | FWK-05 | Phase 1 | Pending |
-| DRV-01 | Phase 1 | Pending |
-| DRV-02 | Phase 1 | Pending |
-| DRV-03 | Phase 1 | Pending |
-| DRV-04 | Phase 1 | Pending |
+| DRV-01 | Phase 1 | ✅ Complete (01-B-DHT22) |
+| DRV-02 | Phase 1 | ✅ Complete (01-C-MQ9-KY026) |
+| DRV-03 | Phase 1 | ✅ Complete (01-C-MQ9-KY026) |
+| DRV-04 | Phase 1 | ✅ Complete (01-C-MQ9-KY026) |
 | RTOS-01 | Phase 1 | Pending |
 | RTOS-02 | Phase 1 | Pending |
 | RTOS-03 | Phase 1 | Pending |
