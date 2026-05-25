@@ -1,8 +1,14 @@
 """DRF viewsets for core models: Device, Reading, Event."""
-from rest_framework import viewsets, filters
+from rest_framework import status, viewsets, filters
+from rest_framework.decorators import action
+from rest_framework.permissions import AllowAny
+from rest_framework.response import Response
+from rest_framework.views import APIView
+from rest_framework.authtoken.models import Token
 import django_filters
 from .models import Device, Reading, Event
-from .serializers import DeviceSerializer, ReadingSerializer, EventSerializer
+from .serializers import (DeviceSerializer, ReadingSerializer, EventSerializer,
+                          LoginSerializer)
 
 
 class ReadingFilter(django_filters.FilterSet):
@@ -69,3 +75,21 @@ class EventViewSet(viewsets.ModelViewSet):
                        filters.OrderingFilter]
     filterset_fields = ['severity', 'resolved']
     ordering_fields = ['timestamp', 'severity']
+
+
+class LoginView(APIView):
+    """View for user authentication via username/password.
+
+    Accepts POST requests with username and password, validates credentials,
+    and returns a DRF Token. Publicly accessible (AllowAny).
+    """
+
+    permission_classes = [AllowAny]
+
+    def post(self, request):
+        """Validate credentials and return auth token."""
+        serializer = LoginSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        user = serializer.validated_data['user']
+        token, created = Token.objects.get_or_create(user=user)
+        return Response({'token': token.key}, status=status.HTTP_200_OK)
