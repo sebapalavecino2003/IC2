@@ -46,6 +46,12 @@
 #define BACKOFF_BASE_MS                1000
 
 /* ========================================================================== */
+/* Calibration                                                               */
+/* ========================================================================== */
+#define CALIBRATION_SAMPLES              10    ///< Number of samples for baseline calibration
+#define CALIBRATION_VARIANCE_THRESHOLD   5.0f  ///< Max deviation from mean for stability check
+
+/* ========================================================================== */
 /* Watchdog                                                                   */
 /* ========================================================================== */
 #define WATCHDOG_TIMEOUT_MS            10000
