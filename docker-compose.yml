@@ -1,0 +1,23 @@
+version: "3.8"
+
+networks:
+  nodealert-net:
+    driver: bridge
+
+volumes:
+  mosquitto_data:
+  mosquitto_log:
+
+services:
+  mosquitto:
+    image: eclipse-mosquitto:2
+    container_name: mosquitto
+    ports:
+      - "1883:1883"
+    volumes:
+      - ./mosquitto/config:/mosquitto/config:ro
+      - mosquitto_data:/mosquitto/data
+      - mosquitto_log:/mosquitto/log
+    networks:
+      - nodealert-net
+    restart: unless-stopped
