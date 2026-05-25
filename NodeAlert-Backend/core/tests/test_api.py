@@ -164,6 +164,7 @@ class EventAPITest(TestCase):
             event_type='high_temperature',
             severity='warning',
             message='Temperature exceeded 40°C',
+            resolved=True,
             timestamp=now,
         )
         Event.objects.create(
