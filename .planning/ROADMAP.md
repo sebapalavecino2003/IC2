@@ -102,6 +102,14 @@
 
 **Mode:** mvp
 
+**Progress:** 3 plans created — 2026-05-25
+
+| Plan | Status | Date |
+|------|--------|------|
+| 04-01 | 📋 Planned | 2026-05-25 |
+| 04-02 | 📋 Planned | 2026-05-25 |
+| 04-03 | 📋 Planned | 2026-05-25 |
+
 **Requirements:**
 
 - API-02
@@ -110,12 +118,11 @@
 **Success Criteria:**
 
 1. Frontend React + Vite + MUI compila y se despliega como parte de Docker Compose
-2. WebSockets transmiten lecturas en tiempo real del backend al dashboard
-3. Dashboard muestra temperatura, humedad, gas y llama con indicadores visuales
-4. Gráficos históricos muestran tendencias con filtros de tiempo
-5. Panel de alertas lista eventos críticos con timestamp
-6. Autenticación protege el acceso (local y remoto)
-7. Estado de conexión del nodo ESP32 visible en el dashboard
+2. Dashboard muestra temperatura, humedad, gas y llama con indicadores visuales en tiempo real (polling cada 3s)
+3. Gráficos históricos (Recharts) muestran tendencias con filtros de tiempo (1h/6h/24h/7d)
+4. Panel de alertas lista eventos críticos con timestamp y severidad
+5. Autenticación DRF Token protege el acceso (local y remoto)
+6. Estado de conexión del nodo ESP32 visible en el dashboard (online/offline por recencia)
 
 ---
 
@@ -165,14 +172,14 @@
 
 ## Coverage Summary
 
-| Phase | Requirements | Success Criteria |
-|-------|-------------|------------------|
-| 1 | 14 | 6 |
-| 2 | 10 | 6 |
-| 3 | 6 | 6 |
-| 4 | 7 | 7 |
-| 5 | 4 | 6 |
-| 6 | 1 | 6 |
+| Phase | Requirements | Success Criteria | Plans |
+|-------|-------------|------------------|-------|
+| 1 | 14 | 6 | 4 |
+| 2 | 10 | 6 | 3 |
+| 3 | 6 | 6 | 2 |
+| 4 | 7 | 6 | 3 |
+| 5 | 4 | 6 | — |
+| 6 | 1 | 6 | — |
 
 **Total v1 requirements:** 42
 **Mapped:** 42 ✓
