@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: in_progress
-stopped_at: Phase 2 context gathered
-last_updated: "2026-05-25T01:32:12.257Z"
+stopped_at: "Phase 2 complete — ready for Phase 3"
+last_updated: "2026-05-25T02:04:00.000Z"
 progress:
   total_phases: 6
-  completed_phases: 1
-  total_plans: 4
-  completed_plans: 4
-  percent: 17
+  completed_phases: 2
+  total_plans: 7
+  completed_plans: 7
+  percent: 33
 ---
 
 # Project State: NodeAlert IoT
@@ -19,19 +19,19 @@ progress:
 
 ## Active Phase
 
-**Current:** Phase 1 — Firmware Foundation + Sensores
-**Next:** Phase 2 — Core Infrastructure + Gateway MQTT
+**Current:** Phase 2 — Core Infrastructure + Gateway MQTT
+**Next:** Phase 3 — MQTT Firmware Integration
 
 ## Progress
 
-**Phases:** 1/6 complete
-**Requirements:** 8/42 complete
+**Phases:** 2/6 complete
+**Requirements:** 17/42 complete (estimated)
 
 ## Session
 
-- **Last session:** 2026-05-25T01:32:12.200Z
-- **Completed:** 01-C-MQ9-KY026-PLAN.md
-- **Stopped At:** Phase 2 context gathered
+- **Last session:** 2026-05-25T02:04:00.000Z
+- **Completed:** Phase 2 — Core Infrastructure + Gateway MQTT
+- **Stopped At:** Phase 2 complete — ready for Phase 3
 
 ## Plans Completed in Phase 1
 
@@ -40,21 +40,31 @@ progress:
 | 01-A-SCAFFOLD | ✅ Done | PlatformIO project scaffold, HAL interface, config system, state machine |
 | 01-B-DHT22 | ✅ Done | DHT22 temperature/humidity driver, serial output, SystemState machine |
 | 01-C-MQ9-KY026 | ✅ Done | MQ-9 gas sensor + KY-026 flame sensor drivers, calibration/filtering module |
-| 01-D-RTOS-INTEGRATION | 🔲 Pending | FreeRTOS task orchestration, queues, mutex, watchdog |
+| 01-D-RTOS-INTEGRATION | ✅ Done | FreeRTOS task orchestration, queues, mutex, watchdog, error handler |
+
+## Plans Completed in Phase 2
+
+| Plan | Status | Summary |
+|------|--------|---------|
+| 02-01 | ✅ Done | Mosquitto MQTT broker with persistence, auth, Docker Compose base |
+| 02-02 | ✅ Done | Django REST Framework + MySQL — Device/Reading/Event models, CRUD API |
+| 02-03 | ✅ Done | Token authentication + setup.sh deployment script with firmware config gen |
 
 ## Recent Activity
 
 - Project initialized with full stack (ESP32 + Django + React + MQTT)
 - Requirements defined: 42 v1 requirements across 8 categories
 - Roadmap created: 6 phases, vertical MVP approach
-- **Plan 01-C (MQ-9 + KY-026 + Calibration):** Completed 2026-05-25. 3 tasks, 10 files modified. All 3 sensor drivers (DHT22, MQ-9, KY-026) now implement ISensor with ADC oneshot API.
+- **Phase 1 complete:** Full firmware stack working — 3 sensor drivers (DHT22, MQ-9, KY-026), FreeRTOS tasks, state machine, error handler, calibration
+- **Phase 2 complete:** Backend infrastructure — Docker Compose (Mosquitto + MySQL + Django), REST API with token auth, 26 passing tests, setup.sh deployment script
+- **Phase 2 plans all verified:** build passes, Django check OK, bash syntax OK, all tests pass
 
 ## Project Reference
 
 See: `.planning/PROJECT.md` (updated 2026-05-24)
 
 **Core value:** Detectar condiciones ambientales peligrosas y actuar preventivamente antes de que escalen a emergencias, incluso sin conexión al servidor central.
-**Current focus:** Phase 01 — Firmware Foundation + Sensores (75% complete)
+**Current focus:** Phase 2 — core-infrastructure-gateway-mqtt (complete)
 
 ## Decisions Log
 
