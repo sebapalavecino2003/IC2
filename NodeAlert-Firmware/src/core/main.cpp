@@ -1,69 +1,186 @@
 /**
  * @file main.cpp
- * @brief NodeAlert IoT — Main firmware entry point
+ * @brief NodeAlert IoT — Main firmware entry point (integrated)
  *
- * Implements the INIT → RUNNING state machine with DHT22 sensor sampling
- * and formatted serial output. The system:
- *   1. Initialises NVS flash for persistent storage
- *   2. Configures serial output via SerialManager
- *   3. Creates the DHT22 temperature/humidity driver
- *   4. Transitions INIT → RUNNING
- *   5. Samples the DHT22 every SAMPLE_INTERVAL_DHT22_MS (2000ms)
- *   6. Outputs formatted readings via serial
+ * Full system integration with:
+ *   - StateMachine (6 states, 10 transitions)
+ *   - ErrorHandler (exponential backoff auto-recovery)
+ *   - SensorManager (3 FreeRTOS sensor tasks with queue + mutex)
+ *   - TaskManager (health monitor task)
+ *
+ * Initialisation sequence:
+ *   NVS init → Serial init → StateMachine INIT →
+ *   StateMachine STANDBY → SensorManager::startTasks() →
+ *   StateMachine RUNNING → TaskManager::startMonitorTask() → main loop
  */
 
 #include <stdio.h>
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
+#include "freertos/queue.h"
 #include "nvs_flash.h"
 
 #include "config/pins_config.h"
 #include "config/sampling_config.h"
 #include "core/system_core.h"
-#include "drivers/sensor/dht22_driver.h"
+#include "core/state_machine.h"
+#include "core/error_handler.h"
+#include "managers/sensor_manager.h"
+#include "managers/task_manager.h"
 #include "services/serial_manager.h"
 
 extern "C" void app_main(void)
 {
-    /* ---- Step 1: Initialise NVS flash ---- */
+    /* ================================================================== */
+    /* 1. Initialise NVS flash                                            */
+    /* ================================================================== */
     esp_err_t ret = nvs_flash_init();
     if (ret == ESP_ERR_NVS_NO_FREE_PAGES || ret == ESP_ERR_NVS_NEW_VERSION_FOUND) {
-        // NVS partition was truncated or upgraded — erase and retry
         ESP_ERROR_CHECK(nvs_flash_erase());
         ret = nvs_flash_init();
     }
     ESP_ERROR_CHECK(ret);
 
-    /* ---- Step 2: Initialise serial output ---- */
+    /* ================================================================== */
+    /* 2. Initialise serial output                                        */
+    /* ================================================================== */
     SerialManager::init(115200);
+    SerialManager::printState("INIT");
 
-    /* ---- Step 3: Print INIT state ---- */
-    SerialManager::printState(stateToString(SystemState::INIT));
+    /* ================================================================== */
+    /* 3. Create StateMachine — set alert thresholds                      */
+    /* ================================================================== */
+    StateMachine stateMachine;
+    stateMachine.setAlertThresholds(TEMP_THRESHOLD_HIGH_C, GAS_THRESHOLD_HIGH);
 
-    /* ---- Step 4: Create DHT22 sensor driver ---- */
-    DHT22Driver dht22(PIN_DHT22_DATA);
+    /* ================================================================== */
+    /* 4. Create ErrorHandler                                             */
+    /* ================================================================== */
+    ErrorHandler errorHandler;
 
-    /* ---- Step 5: Transition to RUNNING ---- */
-    SerialManager::printState(stateToString(SystemState::RUNNING));
-    SystemState current_state = SystemState::RUNNING;
+    /* ================================================================== */
+    /* 5. Create SensorManager — initialise drivers, mutex, queue         */
+    /* ================================================================== */
+    SensorManager sensorManager;
+    sensorManager.init();
 
-    /* ---- Step 6: Main sampling loop ---- */
+    /* ================================================================== */
+    /* 6. Create TaskManager — wire up system components                  */
+    /* ================================================================== */
+    TaskManager taskManager;
+    taskManager.init(&sensorManager, &stateMachine, &errorHandler);
+
+    /* ================================================================== */
+    /* 7. Transition to STANDBY — init complete                           */
+    /* ================================================================== */
+    stateMachine.transitionTo(SystemState::STANDBY);
+
+    /* ================================================================== */
+    /* 8. Spawn all FreeRTOS sensor tasks                                 */
+    /* ================================================================== */
+    sensorManager.startTasks();
+
+    /* ================================================================== */
+    /* 9. Transition to RUNNING — system fully operational                */
+    /* ================================================================== */
+    stateMachine.transitionTo(SystemState::RUNNING);
+
+    /* ================================================================== */
+    /* 10. Start the health monitor task (lowest priority)                */
+    /* ================================================================== */
+    taskManager.startMonitorTask();
+
+    /* ================================================================== */
+    /* 11. Main loop — queue consumer, alert/error/recovery management    */
+    /* ================================================================== */
+    QueueHandle_t queue = sensorManager.getReadingQueue();
+    SensorReading reading;
+
     while (1) {
-        // Read the DHT22 sensor (temperature + humidity)
-        SensorReading reading = dht22.read();
+        // Receive next sensor reading from the queue (100ms timeout)
+        if (xQueueReceive(queue, &reading, pdMS_TO_TICKS(100)) == pdTRUE) {
+            // Print the reading via SerialManager
+            SerialManager::printReading(reading);
 
-        // Print the reading
-        SerialManager::printReading(reading);
+            // ---- Alert detection (RUNNING → ALERT) ----
+            if (stateMachine.getCurrentState() == SystemState::RUNNING) {
+                bool should_alert = false;
 
-        // Print current system state
-        SerialManager::printState(stateToString(current_state));
+                switch (reading.type) {
+                    case SensorType::DHT22_TEMPERATURE:
+                        if (reading.value > stateMachine.getAlertTempHigh()) {
+                            should_alert = true;
+                        }
+                        break;
+                    case SensorType::MQ9_GAS:
+                        if (reading.value > stateMachine.getAlertGasHigh()) {
+                            should_alert = true;
+                        }
+                        break;
+                    case SensorType::KY026_FLAME:
+                        // Flame detected via interrupt — value > 0.5 means flame present
+                        if (reading.value > 0.5f) {
+                            should_alert = true;
+                        }
+                        break;
+                    default:
+                        break;
+                }
 
-        // Basic error handling
-        if (reading.status != SensorStatus::OK) {
-            SerialManager::printError(dht22.getName(), "Read failure — using cached value");
+                if (should_alert) {
+                    errorHandler.reportError("System", "Alert condition detected");
+                    stateMachine.transitionTo(SystemState::ALERT);
+                }
+            }
+
+            // ---- Normalisation check (ALERT → RUNNING with hysteresis) ----
+            if (stateMachine.getCurrentState() == SystemState::ALERT) {
+                // Check all sensor thresholds with hysteresis
+                SensorReading curr_temp = sensorManager.getLatestReading(
+                    SensorType::DHT22_TEMPERATURE);
+                SensorReading curr_gas  = sensorManager.getLatestReading(
+                    SensorType::MQ9_GAS);
+                SensorReading curr_flame = sensorManager.getLatestReading(
+                    SensorType::KY026_FLAME);
+
+                bool temp_ok   = (curr_temp.status  == SensorStatus::OK &&
+                                  curr_temp.value   <= (stateMachine.getAlertTempHigh() -
+                                                        HYSTERESIS_TEMP));
+                bool gas_ok    = (curr_gas.status    == SensorStatus::OK &&
+                                  curr_gas.value     <= (stateMachine.getAlertGasHigh() -
+                                                        HYSTERESIS_GAS));
+                bool flame_ok  = (curr_flame.status  == SensorStatus::OK &&
+                                  curr_flame.value   <= 0.5f);
+
+                if (temp_ok && gas_ok && flame_ok) {
+                    errorHandler.clearError("System");
+                    stateMachine.transitionTo(SystemState::RUNNING);
+                }
+            }
+
+            // ---- Error detection (RUNNING → ERROR) ----
+            if (reading.status != SensorStatus::OK &&
+                stateMachine.getCurrentState() == SystemState::RUNNING) {
+                errorHandler.reportError("Sensor", "Read failure");
+                stateMachine.transitionTo(SystemState::ERROR);
+            }
         }
 
-        // Wait for next sampling interval
-        vTaskDelay(pdMS_TO_TICKS(SAMPLE_INTERVAL_DHT22_MS));
+        // ---- Recovery path (ERROR → RECOVERY → STANDBY → RUNNING) ----
+        if (stateMachine.getCurrentState() == SystemState::ERROR &&
+            errorHandler.shouldRecover()) {
+            // Move to RECOVERY state
+            stateMachine.transitionTo(SystemState::RECOVERY);
+        }
+
+        if (stateMachine.getCurrentState() == SystemState::RECOVERY) {
+            // Attempt recovery: reset backoff, move through STANDBY to RUNNING
+            errorHandler.resetBackoff();
+            stateMachine.transitionTo(SystemState::STANDBY);
+            stateMachine.transitionTo(SystemState::RUNNING);
+        }
+
+        // Yield to RTOS scheduler
+        vTaskDelay(pdMS_TO_TICKS(100));
     }
 }
