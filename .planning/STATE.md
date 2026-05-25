@@ -2,45 +2,45 @@
 gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
-status: in_progress
-stopped_at: Phase 4 planned — ready for execution
-last_updated: "2026-05-25T05:03:32.634Z"
+status: Phase 05 discussed
+stopped_at: Phase 5 context ready — needs planning
+last_updated: "2026-05-25T02:27:00.000Z"
 progress:
   total_phases: 6
-  completed_phases: 2
+  completed_phases: 4
   total_plans: 12
-  completed_plans: 8
-  percent: 33
+  completed_plans: 11
+  percent: 55
 ---
 
 # Project State: NodeAlert IoT
 
-> Last updated: 2026-05-25
+> Last updated: 2026-05-25T02:27
 
 ## Active Phase
 
-**Current:** Phase 4 — Frontend Dashboard (planned)
-**Next:** —
+**Current:** Phase 5 — Automatización Local y Alertas (discussed)
+**Next:** Phase 5 planning
 
 ## Progress
 
-**Phases:** 3/6 complete (Phase 4 planned)
-**Requirements:** 22/42 complete (estimated)
-**Plans:** 9 executed, 3 planned (Phase 4), 0 pending
+**Phases:** 4/6 complete (Phase 4 executed, Phase 5 discussed)
+**Requirements:** 28/42 complete (estimated)
+**Plans:** 11 executed, 0 planned, 1 pending
 
 ## Session
 
 - **Last session:** 2026-05-25
-- **Completed:** Phase 4 plans created (3 plans)
-- **Stopped At:** Phase 4 planned — ready for execution
+- **Completed:** Phase 4 executed (3 waves, 20 commits), Phase 5 discussed (6 areas)
+- **Stopped At:** Phase 5 context ready — needs planning
 
-## Plans Created for Phase 4
+## Plans Completed in Phase 4
 
-| Plan | Objective | Wave | Requirements |
-|------|-----------|------|--------------|
-| 04-01 | Vite Scaffold + Docker + Theme | 1 | UI-01 |
-| 04-02 | Auth + Data Layer + Sensor Cards | 1 | UI-02, UI-05, UI-06, API-02, API-06 |
-| 04-03 | Charts + Alerts + Device Pages | 2 | UI-03, UI-04 |
+| Plan | Objective | Status |
+|------|-----------|--------|
+| 04-01 | Vite Scaffold + Docker + Theme | ✅ Done |
+| 04-02 | Auth + Data Layer + Sensor Cards | ✅ Done |
+| 04-03 | Charts + Alerts + Device Pages | ✅ Done |
 
 ## Plans Completed in Phase 1
 
@@ -73,15 +73,16 @@ progress:
 - Roadmap created: 6 phases, vertical MVP approach
 - **Phase 1 complete:** Full firmware stack working — 3 sensor drivers (DHT22, MQ-9, KY-026), FreeRTOS tasks, state machine, error handler, calibration
 - **Phase 2 complete:** Backend infrastructure — Docker Compose (Mosquitto + MySQL + Django), REST API with token auth, 26 passing tests, setup.sh deployment script
-- **Phase 2 plans all verified:** build passes, Django check OK, bash syntax OK, all tests pass
 - **Phase 3 complete:** Both plans executed — ESP32 MQTT firmware publishes telemetry every 10s with circular buffer + auto-reconnect; Django subscriber persists readings with MAC validation
+- **Phase 4 complete:** Frontend dashboard — Vite + React + TS + MUI Industrial Dark theme, auth context, sensor gauges, charts (Recharts), alerts panel, device list/detail pages, Docker multi-stage Nginx SPA
+- **Phase 5 discussed:** 6 areas — threshold location, hysteresis, actuator behavior, override protocol, dashboard alerts, automation task design. CONTEXT.md committed.
 
 ## Project Reference
 
 See: `.planning/PROJECT.md` (updated 2026-05-24)
 
 **Core value:** Detectar condiciones ambientales peligrosas y actuar preventivamente antes de que escalen a emergencias, incluso sin conexión al servidor central.
-**Current focus:** Phase 04 — dashboard-en-tiempo-real
+**Current focus:** Phase 05 — automatización-local-y-alertas
 
 ## Decisions Log
 
@@ -93,3 +94,8 @@ See: `.planning/PROJECT.md` (updated 2026-05-24)
 | Replace legacy adc1_get_raw() with adc_oneshot handle API | 2026-05-25 | Implemented — ESP-IDF 6.0.1 removed legacy ADC API |
 | Shared ADC1 handle singleton (adc_shared.h/cpp) | 2026-05-25 | Implemented — MQ-9 + KY-026 share one ADC unit handle |
 | KY-026 ISR handler uses xTaskGetTickCountFromISR() | 2026-05-25 | Implemented — ISR-safe timing instead of esp_timer_get_time() |
+| Phase 5 threshold strategy | 2026-05-25 | Hybrid — hardcoded defaults + MQTT overrides, RTC_DATA_ATTR |
+| Phase 5 hysteresis | 2026-05-25 | Both time (3s) + delta (10%), configurable |
+| Phase 5 actuator | 2026-05-25 | Binary relay GPIO_NUM_2, 2-min minimum run time |
+| Phase 5 override protocol | 2026-05-25 | MQTT topic nodealert/{device_id}/commands, 5 command types |
+| Phase 5 automation task | 2026-05-25 | New AutomationManager FreeRTOS task, priority 2, every 3s |
