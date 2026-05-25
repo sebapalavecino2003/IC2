@@ -10,7 +10,7 @@ export default function AppBar() {
   const { alarmActive } = useAlarm()
 
   return (
-    <MuiAppBar position="static" sx={{ bg: alarmActive ? '#3A1B1B' : undefined }}>
+    <MuiAppBar position="static" sx={alarmActive ? { backgroundColor: '#3A1B1B' } : undefined}>
       <Toolbar>
         <Typography variant="h6" sx={{ flexGrow: 1, fontFamily: "'Roboto Mono', monospace" }}>
           NodeAlert IoT

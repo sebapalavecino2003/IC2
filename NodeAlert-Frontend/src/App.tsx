@@ -3,8 +3,10 @@ import { AuthProvider } from './context/AuthContext'
 import { ReadingsProvider } from './context/ReadingsContext'
 import { AlarmProvider } from './context/AlarmContext'
 import LoginPage from './pages/LoginPage'
-import ProtectedRoute from './components/ProtectedRoute'
 import DashboardPage from './pages/DashboardPage'
+import DeviceListPage from './pages/DeviceListPage'
+import DeviceDetailPage from './pages/DeviceDetailPage'
+import ProtectedRoute from './components/ProtectedRoute'
 
 export default function App() {
   return (
@@ -18,6 +20,22 @@ export default function App() {
               element={
                 <ProtectedRoute>
                   <DashboardPage />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/devices"
+              element={
+                <ProtectedRoute>
+                  <DeviceListPage />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/device/:id"
+              element={
+                <ProtectedRoute>
+                  <DeviceDetailPage />
                 </ProtectedRoute>
               }
             />
