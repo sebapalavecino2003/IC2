@@ -74,11 +74,11 @@
 
 **Mode:** mvp
 
-**Progress:** 2 plans created — 2026-05-25
+**Progress:** 2 plans completed — 2026-05-25
 **Plans:**
 
-- [ ] 03-01 — ESP32 MQTT Publisher (firmware): MessageBuffer + MQTT manager + main.cpp integration
-- [ ] 03-02 — Django MQTT Subscriber + Deployment: management command + entrypoint + setup.sh credentials
+- [x] 03-01 — ESP32 MQTT Publisher (firmware): MessageBuffer + MQTT manager + main.cpp integration
+- [x] 03-02 — Django MQTT Subscriber + Deployment: management command + entrypoint + setup.sh credentials
 
 **Requirements:**
 

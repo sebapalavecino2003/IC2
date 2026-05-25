@@ -29,3 +29,21 @@
 #ifndef MQTT_TOPIC_PREFIX
 #define MQTT_TOPIC_PREFIX       "nodealert/"
 #endif
+
+/* ========================================================================== */
+/* MQTT Credentials                                                           */
+/* ========================================================================== */
+#ifndef MQTT_USER
+#define MQTT_USER               ""
+#endif
+
+#ifndef MQTT_PASS
+#define MQTT_PASS               ""
+#endif
+
+/* ========================================================================== */
+/* MQTT Device Identity                                                       */
+/* ========================================================================== */
+#ifndef DEVICE_ID
+#define DEVICE_ID               "nodealert-01"
+#endif

@@ -27,6 +27,7 @@
 #include "core/error_handler.h"
 #include "managers/sensor_manager.h"
 #include "managers/task_manager.h"
+#include "managers/mqtt_manager.h"
 #include "services/serial_manager.h"
 
 extern "C" void app_main(void)
@@ -91,7 +92,14 @@ extern "C" void app_main(void)
     taskManager.startMonitorTask();
 
     /* ================================================================== */
-    /* 11. Main loop — queue consumer, alert/error/recovery management    */
+    /* 11. Create MqttManager — MQTT telemetry publisher task              */
+    /* ================================================================== */
+    MqttManager mqttManager;
+    mqttManager.init(sensorManager.getReadingQueue(), &errorHandler, &stateMachine);
+    mqttManager.startMqttTask();
+
+    /* ================================================================== */
+    /* 12. Main loop — queue consumer, alert/error/recovery management    */
     /* ================================================================== */
     QueueHandle_t queue = sensorManager.getReadingQueue();
     SensorReading reading;

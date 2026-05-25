@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: in_progress
-stopped_at: Phase 3 context gathered
-last_updated: "2026-05-25T02:35:41.581Z"
+stopped_at: Phase 3 complete — both plans executed and verified
+last_updated: "2026-05-25T03:10:00.000Z"
 progress:
   total_phases: 6
-  completed_phases: 2
+  completed_phases: 3
   total_plans: 9
-  completed_plans: 7
-  percent: 33
+  completed_plans: 9
+  percent: 50
 ---
 
 # Project State: NodeAlert IoT
@@ -19,19 +19,19 @@ progress:
 
 ## Active Phase
 
-**Current:** Phase 2 — Core Infrastructure + Gateway MQTT
-**Next:** Phase 3 — MQTT Firmware Integration
+**Current:** Phase 3 — MQTT Firmware Integration (complete)
+**Next:** Phase 4 — Frontend Dashboard
 
 ## Progress
 
-**Phases:** 2/6 complete
-**Requirements:** 17/42 complete (estimated)
+**Phases:** 3/6 complete
+**Requirements:** 22/42 complete (estimated)
 
 ## Session
 
-- **Last session:** 2026-05-25T02:21:09.117Z
-- **Completed:** Phase 2 — Core Infrastructure + Gateway MQTT
-- **Stopped At:** Phase 3 context gathered
+- **Last session:** 2026-05-25T03:10:00.000Z
+- **Completed:** Phase 3 — MQTT Firmware Integration (both plans)
+- **Stopped At:** Phase 3 complete — both plans executed and verified
 
 ## Plans Completed in Phase 1
 
@@ -50,6 +50,13 @@ progress:
 | 02-02 | ✅ Done | Django REST Framework + MySQL — Device/Reading/Event models, CRUD API |
 | 02-03 | ✅ Done | Token authentication + setup.sh deployment script with firmware config gen |
 
+## Plans Completed in Phase 3
+
+| Plan | Status | Summary |
+|------|--------|---------|
+| 03-01 | ✅ Done | ESP32 MQTT Publisher: MessageBuffer, MqttManager FreeRTOS task, main.cpp integration, builds with espressif/mqtt managed component |
+| 03-02 | ✅ Done | Django MQTT Subscriber: management command with paho-mqtt, mac_address model field, setup.sh credential prompts, entrypoint auto-start |
+
 ## Recent Activity
 
 - Project initialized with full stack (ESP32 + Django + React + MQTT)
@@ -58,13 +65,14 @@ progress:
 - **Phase 1 complete:** Full firmware stack working — 3 sensor drivers (DHT22, MQ-9, KY-026), FreeRTOS tasks, state machine, error handler, calibration
 - **Phase 2 complete:** Backend infrastructure — Docker Compose (Mosquitto + MySQL + Django), REST API with token auth, 26 passing tests, setup.sh deployment script
 - **Phase 2 plans all verified:** build passes, Django check OK, bash syntax OK, all tests pass
+- **Phase 3 complete:** Both plans executed — ESP32 MQTT firmware publishes telemetry every 10s with circular buffer + auto-reconnect; Django subscriber persists readings with MAC validation
 
 ## Project Reference
 
 See: `.planning/PROJECT.md` (updated 2026-05-24)
 
 **Core value:** Detectar condiciones ambientales peligrosas y actuar preventivamente antes de que escalen a emergencias, incluso sin conexión al servidor central.
-**Current focus:** Phase 2 — core-infrastructure-gateway-mqtt (complete)
+**Current focus:** Phase 3 — mqtt-firmware-integration (complete)
 
 ## Decisions Log
 
