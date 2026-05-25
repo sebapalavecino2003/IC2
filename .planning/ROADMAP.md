@@ -41,6 +41,8 @@
 
 **Mode:** mvp
 
+**Progress:** 3 plans created — 2026-05-24
+
 **Requirements:**
 - GATE-01, GATE-02, GATE-03
 - API-01, API-04, API-05, API-06
@@ -54,6 +56,12 @@
 5. Script de despliegue automatiza la configuración inicial
 6. Backend accesible desde la red local
 
+| Plan | Status | Date |
+|------|--------|------|
+| 02-01 | 📋 Planned | 2026-05-24 |
+| 02-02 | 📋 Planned | 2026-05-24 |
+| 02-03 | 📋 Planned | 2026-05-24 |
+
 ---
 
 ## Phase 3: Comunicación MQTT ESP32 → Backend
@@ -61,6 +69,12 @@
 **Goal:** Integrar la comunicación MQTT entre el ESP32 y el backend, estableciendo el flujo de datos completo.
 
 **Mode:** mvp
+
+**Progress:** 2 plans created — 2026-05-25
+
+**Plans:**
+- [ ] 03-01 — ESP32 MQTT Publisher (firmware): MessageBuffer + MQTT manager + main.cpp integration
+- [ ] 03-02 — Django MQTT Subscriber + Deployment: management command + entrypoint + setup.sh credentials
 
 **Requirements:**
 - MQTT-01, MQTT-02, MQTT-03, MQTT-04, MQTT-05
