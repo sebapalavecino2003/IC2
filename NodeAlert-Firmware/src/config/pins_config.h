@@ -20,7 +20,7 @@
 /* MQ-9 — Gas / Carbon Monoxide Sensor                                       */
 /* ========================================================================== */
 #define PIN_MQ9_ANALOG          GPIO_NUM_34
-#define PIN_MQ9_ADC_CHANNEL     ADC1_CHANNEL_6
+#define PIN_MQ9_ADC_CHANNEL     ADC_CHANNEL_6
 
 /* ========================================================================== */
 /* KY-026 — Flame / Fire Sensor                                              */
