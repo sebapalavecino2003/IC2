@@ -11,3 +11,4 @@
 
 #include "hal/sensor_reading.h"
 #include "hal/isensor.h"
+#include "hal/adc_shared.h"
