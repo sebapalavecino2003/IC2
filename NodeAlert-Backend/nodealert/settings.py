@@ -2,6 +2,7 @@
 Django settings for nodealert project.
 """
 import os
+import sys
 from pathlib import Path
 from dotenv import load_dotenv
 
@@ -82,6 +83,11 @@ if os.environ.get('MYSQL_HOST'):
     DATABASES['default']['HOST'] = os.environ['MYSQL_HOST']
 if os.environ.get('MYSQL_PORT'):
     DATABASES['default']['PORT'] = os.environ['MYSQL_PORT']
+
+# Test database uses root credentials (test runner needs CREATE DATABASE)
+if 'test' in sys.argv:
+    DATABASES['default']['USER'] = os.environ.get('MYSQL_ROOT_USER', 'root')
+    DATABASES['default']['PASSWORD'] = os.environ.get('MYSQL_ROOT_PASSWORD', '')
 
 
 # Password validation

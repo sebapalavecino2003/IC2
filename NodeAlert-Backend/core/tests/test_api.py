@@ -3,17 +3,30 @@ import json
 from datetime import datetime, timedelta
 from django.test import TestCase
 from django.urls import reverse
+from django.contrib.auth import get_user_model
 from rest_framework import status
 from rest_framework.test import APIClient
+from rest_framework.authtoken.models import Token
 
 from core.models import Device, Reading, Event
+
+
+def _auth_client():
+    """Return an APIClient with a valid auth token."""
+    user = get_user_model().objects.create_user(
+        username='testuser', password='testpass123'
+    )
+    token, _ = Token.objects.get_or_create(user=user)
+    client = APIClient()
+    client.credentials(HTTP_AUTHORIZATION=f'Token {token.key}')
+    return client
 
 
 class DeviceAPITest(TestCase):
     """Test CRUD operations on /api/v1/devices/."""
 
     def setUp(self):
-        self.client = APIClient()
+        self.client = _auth_client()
         self.device_data = {
             'device_id': 'esp32-test-01',
             'name': 'Living Room Sensor',
@@ -107,7 +120,7 @@ class ReadingAPITest(TestCase):
     """Test read-only operations on /api/v1/readings/."""
 
     def setUp(self):
-        self.client = APIClient()
+        self.client = _auth_client()
         self.device = Device.objects.create(
             device_id='esp32-reader', name='Reader'
         )
@@ -154,7 +167,7 @@ class EventAPITest(TestCase):
     """Test CRUD operations on /api/v1/events/."""
 
     def setUp(self):
-        self.client = APIClient()
+        self.client = _auth_client()
         self.device = Device.objects.create(
             device_id='esp32-eventer', name='Eventer'
         )
