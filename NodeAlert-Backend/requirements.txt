@@ -5,3 +5,4 @@ mysqlclient>=2.2,<3
 python-dotenv>=1.0,<2
 gunicorn>=22.0,<23
 paho-mqtt>=2.0,<3
+django-cors-headers>=4.0.0
