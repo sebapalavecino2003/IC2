@@ -12,7 +12,16 @@ if [ -n "${DJANGO_SUPERUSER_USERNAME:-}" ] && [ -n "${DJANGO_SUPERUSER_PASSWORD:
     --noinput 2>/dev/null || true
 fi
 
+# Start MQTT subscriber in background (D-14)
+if [ -n "${MQTT_SUBSCRIBER_USER:-}" ] && [ -n "${MQTT_SUBSCRIBER_PASSWORD:-}" ]; then
+  echo "Starting MQTT subscriber..."
+  python manage.py mqtt_subscriber &
+  MQTT_PID=$!
+  echo "MQTT subscriber started (PID: ${MQTT_PID})"
+else
+  echo "MQTT subscriber credentials not set — skipping MQTT subscription"
+fi
+
 # Start Django development server
-# Note: Phase 3 will add MQTT subscriber startup here
 # Phase 6 will switch to gunicorn for production
 python manage.py runserver 0.0.0.0:8000

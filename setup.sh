@@ -102,6 +102,31 @@ while [ -z "$MQTT_BROKER_IP" ]; do
   read -r -p "Firmware MQTT Broker IP/Hostname (required — e.g. 192.168.1.100): " MQTT_BROKER_IP
 done
 
+# MQTT Firmware Credentials (for ESP32 MQTT_USER/MQTT_PASS, D-19)
+read -r -p "Firmware MQTT User [nodealert_esp32]: " FIRMWARE_MQTT_USER
+FIRMWARE_MQTT_USER="${FIRMWARE_MQTT_USER:-nodealert_esp32}"
+
+read -r -p "Firmware MQTT Password: " FIRMWARE_MQTT_PASSWORD
+FIRMWARE_MQTT_PASSWORD="${FIRMWARE_MQTT_PASSWORD:-}"
+
+while [ -z "$FIRMWARE_MQTT_PASSWORD" ]; do
+  read -r -p "Firmware MQTT Password (required): " FIRMWARE_MQTT_PASSWORD
+done
+
+read -r -p "Firmware Device ID [nodealert-01]: " FIRMWARE_DEVICE_ID
+FIRMWARE_DEVICE_ID="${FIRMWARE_DEVICE_ID:-nodealert-01}"
+
+# MQTT Subscriber credentials (for Django management command, D-17)
+read -r -p "MQTT Subscriber User [mqtt_subscriber]: " MQTT_SUBSCRIBER_USER
+MQTT_SUBSCRIBER_USER="${MQTT_SUBSCRIBER_USER:-mqtt_subscriber}"
+
+read -r -p "MQTT Subscriber Password: " MQTT_SUBSCRIBER_PASSWORD
+MQTT_SUBSCRIBER_PASSWORD="${MQTT_SUBSCRIBER_PASSWORD:-}"
+
+while [ -z "$MQTT_SUBSCRIBER_PASSWORD" ]; do
+  read -r -p "MQTT Subscriber Password (required): " MQTT_SUBSCRIBER_PASSWORD
+done
+
 # MySQL
 read -r -p "MySQL Root Password: " MYSQL_ROOT_PASSWORD
 MYSQL_ROOT_PASSWORD="${MYSQL_ROOT_PASSWORD:-}"
@@ -170,6 +195,15 @@ MQTT_BROKER_PASSWORD=${MQTT_BROKER_PASSWORD}
 # MQTT Broker — Firmware connection
 MQTT_BROKER_IP=${MQTT_BROKER_IP}
 
+# MQTT Subscriber (for Django management command)
+MQTT_SUBSCRIBER_USER=${MQTT_SUBSCRIBER_USER}
+MQTT_SUBSCRIBER_PASSWORD=${MQTT_SUBSCRIBER_PASSWORD}
+
+# Firmware MQTT (for ESP32 node credentials, generated in user_config.h)
+FIRMWARE_MQTT_USER=${FIRMWARE_MQTT_USER}
+FIRMWARE_MQTT_PASSWORD=${FIRMWARE_MQTT_PASSWORD}
+FIRMWARE_DEVICE_ID=${FIRMWARE_DEVICE_ID}
+
 # MySQL Database
 MYSQL_ROOT_PASSWORD=${MYSQL_ROOT_PASSWORD}
 MYSQL_DATABASE=${MYSQL_DATABASE}
@@ -207,6 +241,20 @@ if command -v mosquitto_passwd &>/dev/null; then
     echo "  ERROR: mosquitto_passwd command failed."
     exit 1
   fi
+
+  # Add firmware MQTT user (D-19)
+  if mosquitto_passwd -b "$MOSQUITTO_PASSWD_FILE" "$FIRMWARE_MQTT_USER" "$FIRMWARE_MQTT_PASSWORD"; then
+    echo "  Added firmware MQTT user: ${FIRMWARE_MQTT_USER}"
+  else
+    echo "  WARNING: Failed to add firmware MQTT user (non-fatal)."
+  fi
+
+  # Add MQTT subscriber user (D-17)
+  if mosquitto_passwd -b "$MOSQUITTO_PASSWD_FILE" "$MQTT_SUBSCRIBER_USER" "$MQTT_SUBSCRIBER_PASSWORD"; then
+    echo "  Added MQTT subscriber user: ${MQTT_SUBSCRIBER_USER}"
+  else
+    echo "  WARNING: Failed to add subscriber user (non-fatal)."
+  fi
 else
   echo "  mosquitto_passwd binary not found. Attempting to install..."
   if command -v apt-get &>/dev/null; then
@@ -232,6 +280,20 @@ else
   else
     echo "  ERROR: mosquitto_passwd command failed after install."
     exit 1
+  fi
+
+  # Add firmware MQTT user (D-19)
+  if mosquitto_passwd -b "$MOSQUITTO_PASSWD_FILE" "$FIRMWARE_MQTT_USER" "$FIRMWARE_MQTT_PASSWORD"; then
+    echo "  Added firmware MQTT user: ${FIRMWARE_MQTT_USER}"
+  else
+    echo "  WARNING: Failed to add firmware MQTT user (non-fatal)."
+  fi
+
+  # Add MQTT subscriber user (D-17)
+  if mosquitto_passwd -b "$MOSQUITTO_PASSWD_FILE" "$MQTT_SUBSCRIBER_USER" "$MQTT_SUBSCRIBER_PASSWORD"; then
+    echo "  Added MQTT subscriber user: ${MQTT_SUBSCRIBER_USER}"
+  else
+    echo "  WARNING: Failed to add subscriber user (non-fatal)."
   fi
 fi
 
@@ -325,6 +387,8 @@ PLATFORMIO_INI="NodeAlert-Firmware/platformio.ini"
 
 mkdir -p "$FIRMWARE_CONFIG_DIR"
 
+FIRMWARE_MQTT_PASS="${FIRMWARE_MQTT_PASSWORD}"
+
 cat > "$FIRMWARE_CONFIG_FILE" <<CONFIGEOF
 /**
  * @file user_config.h
@@ -351,6 +415,17 @@ cat > "$FIRMWARE_CONFIG_FILE" <<CONFIGEOF
 /* ------------------------------------------------------------------------ */
 #define MQTT_BROKER_URI         "mqtt://${MQTT_BROKER_IP}"
 #define MQTT_PORT               1883
+
+/* ------------------------------------------------------------------------ */
+/* MQTT Credentials (overrides mqtt_config.h defaults — D-18/D-19)          */
+/* ------------------------------------------------------------------------ */
+#define MQTT_USER               "${FIRMWARE_MQTT_USER}"
+#define MQTT_PASS               "${FIRMWARE_MQTT_PASS}"
+
+/* ------------------------------------------------------------------------ */
+/* Device Identity (overrides mqtt_config.h defaults)                       */
+/* ------------------------------------------------------------------------ */
+#define DEVICE_ID               "${FIRMWARE_DEVICE_ID}"
 CONFIGEOF
 
 echo "  Firmware config generated: ${FIRMWARE_CONFIG_FILE}"
@@ -379,10 +454,16 @@ echo "  MQTT Broker:   ${MQTT_BROKER_IP}:1883"
 echo "  Django API:    http://${MQTT_BROKER_IP}:8000/api/v1/"
 echo "  Django Admin:  http://${MQTT_BROKER_IP}:8000/admin/"
 echo ""
+echo "MQTT Subscriber:"
+echo "  Subscriber user:  ${MQTT_SUBSCRIBER_USER}"
+echo "  Firmware user:    ${FIRMWARE_MQTT_USER}"
+echo "  Device ID:        ${FIRMWARE_DEVICE_ID}"
+echo ""
 echo "Management Commands:"
 echo "  View logs:     docker compose logs -f"
 echo "  Stop services: docker compose down"
 echo "  Restart:       docker compose restart"
+echo "  MQTT subscriber auto-starts with Django container"
 echo ""
 echo "Firmware Configuration:"
 echo "  Config file:   ${FIRMWARE_CONFIG_FILE}"

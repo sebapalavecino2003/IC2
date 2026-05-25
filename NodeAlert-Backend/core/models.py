@@ -23,6 +23,7 @@ class Device(models.Model):
 
     device_id = models.CharField(max_length=50, unique=True)
     name = models.CharField(max_length=100)
+    mac_address = models.CharField(max_length=17, blank=True, default='')
     location = models.CharField(max_length=200, blank=True, default='')
     is_active = models.BooleanField(default=True)
     created_at = models.DateTimeField(auto_now_add=True)
