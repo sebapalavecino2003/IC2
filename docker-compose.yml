@@ -36,6 +36,17 @@ services:
       - nodealert-net
     restart: unless-stopped
 
+  frontend:
+    build: ./NodeAlert-Frontend
+    container_name: frontend
+    ports:
+      - "3000:80"
+    depends_on:
+      - django
+    networks:
+      - nodealert-net
+    restart: unless-stopped
+
   mysql:
     image: mysql:8.0
     container_name: mysql
