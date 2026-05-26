@@ -1,11 +1,13 @@
 import { useState } from 'react'
-import { Card, CardContent, Typography, Alert as MuiAlert } from '@mui/material'
+import { Card, CardContent, Typography, Tabs, Tab } from '@mui/material'
 import EventTable from './EventTable'
+import ActiveAlertsPanel from './ActiveAlertsPanel'
 import { useReadings } from '../context/ReadingsContext'
 import api from '../services/api'
 
 export default function AlertPanel() {
   const { events } = useReadings()
+  const [tab, setTab] = useState(0)
   const [localEvents, setLocalEvents] = useState(events)
 
   const currentEvents = events.length > 0 ? events : localEvents
@@ -22,11 +24,13 @@ export default function AlertPanel() {
   return (
     <Card>
       <CardContent>
-        <Typography variant="h6" gutterBottom>Eventos y Alertas</Typography>
-        {currentEvents.length === 0 && (
-          <MuiAlert severity="info">No hay eventos registrados</MuiAlert>
-        )}
-        <EventTable events={currentEvents} onResolve={handleResolve} />
+        <Typography variant="h6" gutterBottom>Alertas y Eventos</Typography>
+        <Tabs value={tab} onChange={(_, v) => setTab(v)} sx={{ mb: 2 }}>
+          <Tab label="Alertas Activas" />
+          <Tab label="Historial" />
+        </Tabs>
+        {tab === 0 && <ActiveAlertsPanel />}
+        {tab === 1 && <EventTable events={currentEvents} onResolve={handleResolve} />}
       </CardContent>
     </Card>
   )

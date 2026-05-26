@@ -44,3 +44,20 @@ export interface SensorStatuses {
   gas: SensorStatus
   flame: SensorStatus
 }
+
+export type OverrideCommand =
+  | 'actuator_on'
+  | 'actuator_off'
+  | 'return_to_auto'
+  | 'acknowledge_alarm'
+  | 'update_thresholds'
+
+export interface CommandPayload {
+  command: OverrideCommand
+  params?: Record<string, number>
+}
+
+export interface OverrideState {
+  active: boolean
+  mode: 'auto' | 'manual'
+}

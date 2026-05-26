@@ -1,19 +1,32 @@
 import { Grid, Chip, Box } from '@mui/material'
+import BuildIcon from '@mui/icons-material/Build'
+import PlayArrowIcon from '@mui/icons-material/PlayArrow'
 import SensorGauge from './SensorGauge'
 import { useAlarm } from '../context/AlarmContext'
 
 export default function SummaryBar() {
-  const { latest, statuses, deviceStatus, alarmActive, alarmMessage } = useAlarm()
+  const { latest, statuses, deviceStatus, alarmActive, alarmMessage, overrideActive } = useAlarm()
 
   return (
     <Box sx={{ mb: 2 }}>
       <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 1 }}>
-        <Chip
-          label={deviceStatus === 'online' ? 'ESP32 Conectado' : 'ESP32 Desconectado'}
-          color={deviceStatus === 'online' ? 'success' : 'error'}
-          size="small"
-          variant="outlined"
-        />
+        <Box sx={{ display: 'flex', gap: 1, alignItems: 'center' }}>
+          <Chip
+            label={deviceStatus === 'online' ? 'ESP32 Conectado' : 'ESP32 Desconectado'}
+            color={deviceStatus === 'online' ? 'success' : 'error'}
+            size="small"
+            variant="outlined"
+          />
+          {deviceStatus === 'online' && (
+            <Chip
+              label={overrideActive ? 'Override Manual' : 'Modo Auto'}
+              color={overrideActive ? 'warning' : 'success'}
+              size="small"
+              variant={overrideActive ? 'filled' : 'outlined'}
+              icon={overrideActive ? <BuildIcon /> : <PlayArrowIcon />}
+            />
+          )}
+        </Box>
         {alarmActive && alarmMessage && (
           <Chip
             label={alarmMessage}

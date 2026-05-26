@@ -8,5 +8,8 @@ mosquitto_passwd
 __pycache__/
 *.pyc
 
+# VS Code
+.vscode/
+
 # macOS
 .DS_Store

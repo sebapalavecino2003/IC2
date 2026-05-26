@@ -1,5 +1,6 @@
-import { createContext, useContext, useMemo, type ReactNode } from 'react'
+import { createContext, useContext, useMemo, useState, useCallback, type ReactNode } from 'react'
 import { useReadings } from './ReadingsContext'
+import api from '../services/api'
 import type { LatestReadings, SensorStatuses, SensorStatus } from '../types'
 
 interface AlarmState {
@@ -8,6 +9,9 @@ interface AlarmState {
   statuses: SensorStatuses
   latest: LatestReadings
   deviceStatus: 'online' | 'offline'
+  overrideActive: boolean
+  currentDeviceId: number | null
+  acknowledgeAlarm: () => Promise<void>
 }
 
 function deriveLatest(readings: ReturnType<typeof useReadings>['readings']): LatestReadings {
@@ -51,6 +55,18 @@ export function AlarmProvider({ children }: { children: ReactNode }) {
   const statuses = useMemo(() => deriveStatuses(latest), [latest])
   const deviceStatus = useMemo(() => deriveDeviceStatus(readings), [readings])
 
+  const [overrideActive, setOverrideActive] = useState(false)
+  const currentDeviceId = readings.length > 0 ? readings[0].device : null
+
+  const acknowledgeAlarm = useCallback(async () => {
+    if (!currentDeviceId) return
+    try {
+      await api.post(`/devices/${currentDeviceId}/command/`, { command: 'acknowledge_alarm' })
+    } catch {
+      // Silently fail — api.ts interceptor handles 401
+    }
+  }, [currentDeviceId])
+
   const alarmActive = statuses.gas === 'critical' || statuses.flame === 'critical'
   const alarmMessage = alarmActive
     ? statuses.gas === 'critical'
@@ -59,7 +75,10 @@ export function AlarmProvider({ children }: { children: ReactNode }) {
     : null
 
   return (
-    <AlarmContext.Provider value={{ alarmActive, alarmMessage, statuses, latest, deviceStatus }}>
+    <AlarmContext.Provider value={{
+      alarmActive, alarmMessage, statuses, latest, deviceStatus,
+      overrideActive, currentDeviceId, acknowledgeAlarm,
+    }}>
       {children}
     </AlarmContext.Provider>
   )

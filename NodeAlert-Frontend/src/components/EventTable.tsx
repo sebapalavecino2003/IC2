@@ -17,6 +17,16 @@ const SEVERITY_COLORS: Record<string, 'info' | 'warning' | 'error'> = {
   critical: 'error',
 }
 
+const EVENT_TYPE_LABELS: Record<string, string> = {
+  'threshold_crossed': 'Umbral superado',
+  'actuator_on': 'Actuador ON',
+  'actuator_off': 'Actuador OFF',
+  'override': 'Override',
+  'thresholds': 'Configuración',
+  'flame_detected': 'Llama detectada',
+  'gas_alert': 'Alerta de gas',
+}
+
 export default function EventTable({ events, onResolve }: EventTableProps) {
   const [filterSeverity, setFilterSeverity] = useState<string>('all')
 
@@ -59,7 +69,7 @@ export default function EventTable({ events, onResolve }: EventTableProps) {
                 <TableCell>
                   <Chip label={event.severity} color={SEVERITY_COLORS[event.severity]} size="small" />
                 </TableCell>
-                <TableCell>{event.event_type}</TableCell>
+                <TableCell>{EVENT_TYPE_LABELS[event.event_type] || event.event_type}</TableCell>
                 <TableCell>{event.message}</TableCell>
                 <TableCell>
                   {!event.resolved && (

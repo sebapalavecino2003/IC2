@@ -59,3 +59,12 @@ class LoginSerializer(serializers.Serializer):
             raise serializers.ValidationError("User account is disabled")
         attrs['user'] = user
         return attrs
+
+
+class CommandSerializer(serializers.Serializer):
+    """Serializer for device MQTT commands (AUTO-04)."""
+    command = serializers.ChoiceField(choices=[
+        'actuator_on', 'actuator_off', 'return_to_auto',
+        'acknowledge_alarm', 'update_thresholds',
+    ])
+    params = serializers.JSONField(required=False, default=None)
