@@ -2,37 +2,54 @@
 gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
-status: Phase 05 discussed
-stopped_at: Phase 5 context ready — needs planning
-last_updated: "2026-05-25T02:27:00.000Z"
+status: Phase 06 planned
+stopped_at: Phase 6 planned — 3 plans created, plan checker PASS
+last_updated: "2026-05-25T21:40:00.000Z"
 progress:
   total_phases: 6
-  completed_phases: 4
-  total_plans: 12
-  completed_plans: 11
-  percent: 55
+  completed_phases: 5
+  total_plans: 15
+  completed_plans: 14
+  planned_plans: 3
+  percent: 78
 ---
 
 # Project State: NodeAlert IoT
 
-> Last updated: 2026-05-25T02:27
+> Last updated: 2026-05-25T21:40
 
 ## Active Phase
 
-**Current:** Phase 5 — Automatización Local y Alertas (discussed)
-**Next:** Phase 5 planning
+**Current:** Phase 6 — Hardening y Documentación (planned)
+**Next:** (none — Phase 6 is final milestone phase)
 
 ## Progress
 
-**Phases:** 4/6 complete (Phase 4 executed, Phase 5 discussed)
-**Requirements:** 28/42 complete (estimated)
-**Plans:** 11 executed, 0 planned, 1 pending
+**Phases:** 5/6 complete (Phases 1-5 executed, Phase 6 planned)
+**Requirements:** 32/42 complete (estimated)
+**Plans:** 14 executed, 3 planned, 0 pending
 
 ## Session
 
 - **Last session:** 2026-05-25
-- **Completed:** Phase 4 executed (3 waves, 20 commits), Phase 5 discussed (6 areas)
-- **Stopped At:** Phase 5 context ready — needs planning
+- **Completed:** Phase 6 discussed (5 areas, 18 decisions), Phase 6 planned (3 plans, 1 wave, plan checker PASS), documentation (06-PATTERNS.md, 06-CONTEXT.md, 06-01/02/03-PLAN.md)
+- **Stopped At:** Phase 6 planned — all 3 plans created and verified
+
+## Plans in Phase 6
+
+| Plan | Objective | Status |
+|------|-----------|--------|
+| 06-01 | Watchdog ESP32 — Task WDT (7 tasks), Interrupt WDT, Last Will MQTT, status heartbeat (60s + state transitions) with wifi_rssi/errores_activos | ◆ Planned |
+| 06-02 | Servidor Producción — Gunicorn/nginx, HEALTHCHECKs 5 containers, liveness/readiness endpoints, DRF throttling (5/min login, 100/min API) | ◆ Planned |
+| 06-03 | Documentación — README raíz, DEPLOY, ARCHITECTURE, API, READMEs de componente (firmware/backend/frontend) en Español | ◆ Planned |
+
+## Plans Completed in Phase 5
+
+| Plan | Objective | Status |
+|------|-----------|--------|
+| 05-01 | ESP32 Automation Engine — thresholds, AutomationManager, hysteresis, actuator, event publishing | ✅ Done |
+| 05-02 | Backend Command API + Frontend Override — mqtt_publisher.py, CommandSerializer, overrideActive, acknowledgeAlarm | ✅ Done |
+| 05-03 | Frontend Active Alerts Panel — ActiveAlertsPanel, AlertPanel tabs, EventTable Spanish labels | ✅ Done |
 
 ## Plans Completed in Phase 4
 
@@ -76,13 +93,16 @@ progress:
 - **Phase 3 complete:** Both plans executed — ESP32 MQTT firmware publishes telemetry every 10s with circular buffer + auto-reconnect; Django subscriber persists readings with MAC validation
 - **Phase 4 complete:** Frontend dashboard — Vite + React + TS + MUI Industrial Dark theme, auth context, sensor gauges, charts (Recharts), alerts panel, device list/detail pages, Docker multi-stage Nginx SPA
 - **Phase 5 discussed:** 6 areas — threshold location, hysteresis, actuator behavior, override protocol, dashboard alerts, automation task design. CONTEXT.md committed.
+- **Phase 5 executed:** 3 plans — ESP32 AutomationManager task (3s, priority 2), MQTT command endpoint + override UI, Active Alerts Panel with tabs + acknowledge. All verified (TS compile, Python syntax).
+- **Phase 6 discussed:** 5 areas (watchdog, Gunicorn/nginx, health checks, rate limiting, documentation), 18 decisions (D-01 to D-18). CONTEXT.md committed.
+- **Phase 6 planned:** 3 plans (06-01: ESP32 Watchdog, 06-02: Production Server + Monitoring + Rate Limiting, 06-03: Documentation). Plan checker PASS after 1 revision cycle.
 
 ## Project Reference
 
 See: `.planning/PROJECT.md` (updated 2026-05-24)
 
 **Core value:** Detectar condiciones ambientales peligrosas y actuar preventivamente antes de que escalen a emergencias, incluso sin conexión al servidor central.
-**Current focus:** Phase 05 — automatización-local-y-alertas
+**Current focus:** Phase 06 — hardening-y-documentacion
 
 ## Decisions Log
 
@@ -99,3 +119,8 @@ See: `.planning/PROJECT.md` (updated 2026-05-24)
 | Phase 5 actuator | 2026-05-25 | Binary relay GPIO_NUM_2, 2-min minimum run time |
 | Phase 5 override protocol | 2026-05-25 | MQTT topic nodealert/{device_id}/commands, 5 command types |
 | Phase 5 automation task | 2026-05-25 | New AutomationManager FreeRTOS task, priority 2, every 3s |
+| Phase 6 watchdog strategy | 2026-05-25 | Both Task WDT + Interrupt WDT, auto-reboot + MQTT Last Will, all 7 tasks watched |
+| Phase 6 production server | 2026-05-25 | Gunicorn 2-4 workers, env-flag toggle, nginx reverse proxy, remove direct Django port |
+| Phase 6 monitoring | 2026-05-25 | Liveness + readiness endpoints, Docker HEALTHCHECK all 5 containers, ESP32 status topic (60s + state transitions) |
+| Phase 6 auth hardening | 2026-05-25 | Rate limiting: 5/min/IP on login, 100/min/user on API, DRF AnonRateThrottle + UserRateThrottle |
+| Phase 6 documentation | 2026-05-25 | Component READMEs + docs/ folder, all in Spanish (README, DEPLOY, ARCHITECTURE, API) |
