@@ -1,8 +1,10 @@
 # Environment variables (contains credentials)
 .env
 
-# Mosquitto generated password file (hashed credentials)
-mosquitto_passwd
+# Mosquitto generated password files — NOT ignored for mosquitto/config/
+# (empty placeholder is tracked so clone works; setup.sh overwrites it)
+# Ignore any stray copies outside of mosquitto/config/
+/mosquitto_passwd
 
 # Python cache
 __pycache__/
