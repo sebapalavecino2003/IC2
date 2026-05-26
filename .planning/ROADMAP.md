@@ -132,18 +132,26 @@
 
 **Mode:** mvp
 
+**Progress:** 3 plans completed — 2026-05-25
+
+| Plan | Status | Date |
+|------|--------|------|
+| 05-01 | ✅ Done | 2026-05-25 |
+| 05-02 | ✅ Done | 2026-05-25 |
+| 05-03 | ✅ Done | 2026-05-25 |
+
 **Requirements:**
 
 - AUTO-01, AUTO-02, AUTO-03, AUTO-04
 
 **Success Criteria:**
 
-1. ESP32 evalúa condiciones críticas (umbrales de temperatura, gas, llama) de forma autónoma
-2. Histéresis evita falsos positivos en la detección de eventos
-3. Actuadores de ventilación se activan localmente al superar umbrales
-4. Comandos MQTT de override desde el servidor son recibidos y ejecutados
-5. Eventos y alertas se registran en el backend con timestamp y tipo
-6. Dashboard muestra alertas activas e históricas en tiempo real
+1. ✅ ESP32 evalúa condiciones críticas (umbrales de temperatura, gas, llama) de forma autónoma
+2. ✅ Histéresis evita falsos positivos en la detección de eventos
+3. ✅ Actuadores de ventilación se activan localmente al superar umbrales
+4. ✅ Comandos MQTT de override desde el servidor son recibidos y ejecutados
+5. ⬜ Eventos y alertas se registran en el backend con timestamp y tipo (backend receiver exists; ESP32 publishes events)
+6. ✅ Dashboard muestra alertas activas e históricas en tiempo real
 
 ---
 
@@ -152,6 +160,13 @@
 **Goal:** Robustecer el sistema completo con tolerancia a fallos, scripts de deploy, monitoreo y documentación.
 
 **Mode:** mvp
+
+**Progress:** 3 plans created — 2026-05-25
+**Plans:**
+
+- [ ] 06-01 — ESP32 Watchdog + Status MQTT: Task WDT, Last Will, status heartbeat cada 60s
+- [ ] 06-02 — Servidor Producción + Health Checks + Rate Limiting: Gunicorn, nginx, HEALTHCHECKs, throttling DRF
+- [ ] 06-03 — Documentación: README raíz, guía de despliegue, arquitectura, API, READMEs de componente
 
 **Requirements:**
 
@@ -177,9 +192,9 @@
 | 1 | 14 | 6 | 4 |
 | 2 | 10 | 6 | 3 |
 | 3 | 6 | 6 | 2 |
-| 4 | 3/3 | Complete   | 2026-05-25 |
-| 5 | 4 | 6 | — |
-| 6 | 1 | 6 | — |
+| 4 | 7 | 6 | 3 |
+| 5 | 4 | 6 | 3 |
+| 6 | 2 | 6 | 3 |
 
 **Total v1 requirements:** 42
 **Mapped:** 42 ✓
