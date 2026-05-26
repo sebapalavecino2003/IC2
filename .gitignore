@@ -13,3 +13,12 @@ __pycache__/
 
 # macOS
 .DS_Store
+
+# Raspberry Pi — exclude firmware (ESP32, not needed on Pi)
+NodeAlert-Firmware/
+.docs/
+# Raspberry Pi — exclude planning docs (not needed on Pi)
+.planning/
+
+# Local development override — not for production (Raspberry Pi)
+docker-compose.override.yml
