@@ -1,10 +1,14 @@
 #include "mqtt_manager.h"
+#include "managers/automation_manager.h"
 #include "core/error_handler.h"
 #include "core/state_machine.h"
 #include "core/message_buffer.h"
 #include "config/mqtt_broker_config.h"
 #include "hal/sensor_reading.h"
 #include "esp_timer.h"
+#include "esp_heap_caps.h"
+#include "esp_system.h"
+#include "esp_wifi.h"
 #include <cstdio>
 #include <cstring>
 
@@ -15,6 +19,9 @@ MqttManager::MqttManager()
     , m_task_handle(nullptr)
     , m_client(nullptr)
     , m_connected(false)
+    , m_auto_mgr(nullptr)
+    , m_last_status_ms(0)
+    , m_last_state(SystemState::INIT)
 {
 }
 
@@ -82,6 +89,50 @@ void MqttManager::drainBuffer()
     }
 }
 
+void MqttManager::buildStatusJson(char* buffer, size_t buffer_size)
+{
+    const char* state_str = "UNKNOWN";
+    if (m_state_mach) {
+        state_str = m_state_mach->getStateName();
+    }
+
+    uint32_t uptime_ms = (uint32_t)(esp_timer_get_time() / 1000);
+    uint32_t free_heap = (uint32_t)esp_get_free_heap_size();
+
+    int8_t rssi = 0;
+    wifi_ap_record_t ap_info;
+    if (esp_wifi_sta_get_ap_info(&ap_info) == ESP_OK) {
+        rssi = ap_info.rssi;
+    }
+
+    int written = snprintf(buffer, buffer_size,
+        "{\"device_id\":\"%s\",\"status\":\"online\",\"uptime_ms\":%lu,"
+        "\"free_heap\":%lu,\"system_state\":\"%s\","
+        "\"wifi_rssi\":%d,\"last_reset_reason\":%d,"
+        "\"errores_activos\":[]}",
+        DEVICE_ID, (unsigned long)uptime_ms,
+        (unsigned long)free_heap, state_str,
+        (int)rssi, (int)esp_reset_reason());
+
+    (void)written;
+}
+
+void MqttManager::publishStatus()
+{
+    char topic[64];
+    char payload[256];
+
+    buildTopic("status", topic, sizeof(topic));
+    buildStatusJson(payload, sizeof(payload));
+
+    if (m_connected && m_client) {
+        int ret = esp_mqtt_client_publish(m_client, topic, payload, 0, 1, 0);
+        if (ret < 0) {
+            m_error_handler->reportError("MQTT", "Status publish failed");
+        }
+    }
+}
+
 void MqttManager::mqttEventHandler(void* handler_args, esp_event_base_t base,
                                    int32_t event_id, void* event_data)
 {
@@ -95,6 +146,10 @@ void MqttManager::mqttEventHandler(void* handler_args, esp_event_base_t base,
             char cmd_topic[64];
             self->buildTopic("commands", cmd_topic, sizeof(cmd_topic));
             esp_mqtt_client_subscribe(self->m_client, cmd_topic, 1);
+
+            if (self->m_auto_mgr) {
+                self->m_auto_mgr->setMqttClient(self->m_client);
+            }
 
             self->m_error_handler->clearError("MQTT");
             self->drainBuffer();
@@ -112,6 +167,14 @@ void MqttManager::mqttEventHandler(void* handler_args, esp_event_base_t base,
             printf("[MQTT] Command: %.*s -> %.*s\n",
                    msg->topic_len, msg->topic,
                    msg->data_len, msg->data);
+
+            if (self->m_auto_mgr && msg->data_len > 0) {
+                char cmd[128];
+                size_t len = (msg->data_len < 127) ? msg->data_len : 127;
+                memcpy(cmd, msg->data, len);
+                cmd[len] = '\0';
+                self->m_auto_mgr->processCommand(cmd);
+            }
             break;
         }
 
@@ -130,6 +193,10 @@ void MqttManager::mqttTask(void* pvParams)
     mqtt_cfg.credentials.username     = MQTT_USER;
     mqtt_cfg.credentials.authentication.password = MQTT_PASS;
     mqtt_cfg.session.keepalive        = MQTT_KEEPALIVE;
+    mqtt_cfg.session.last_will.topic  = "nodealert/" DEVICE_ID "/status";
+    mqtt_cfg.session.last_will.msg    = "{\"device_id\":\"" DEVICE_ID "\",\"status\":\"offline\",\"reason\":\"watchdog_reboot\"}";
+    mqtt_cfg.session.last_will.qos    = 1;
+    mqtt_cfg.session.last_will.retain = false;
 
     self->m_client = esp_mqtt_client_init(&mqtt_cfg);
     esp_mqtt_client_register_event(self->m_client, MQTT_EVENT_ANY,
@@ -187,6 +254,17 @@ void MqttManager::mqttTask(void* pvParams)
             }
 
             last_publish_ms = now_ms;
+        }
+
+        // Publish device status: every 60s OR immediately on state transition (D-13)
+        SystemState current_state = self->m_state_mach->getCurrentState();
+        bool state_changed = (current_state != self->m_last_state);
+        bool time_elapsed  = ((now_ms - self->m_last_status_ms) >= 60000);
+
+        if (state_changed || time_elapsed) {
+            self->publishStatus();
+            self->m_last_status_ms = now_ms;
+            self->m_last_state = current_state;
         }
     }
 }

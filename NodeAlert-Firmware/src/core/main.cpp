@@ -19,6 +19,7 @@
 #include "freertos/task.h"
 #include "freertos/queue.h"
 #include "nvs_flash.h"
+#include "esp_task_wdt.h"
 
 #include "config/pins_config.h"
 #include "config/sampling_config.h"
@@ -27,6 +28,7 @@
 #include "core/error_handler.h"
 #include "managers/sensor_manager.h"
 #include "managers/task_manager.h"
+#include "managers/automation_manager.h"
 #include "managers/mqtt_manager.h"
 #include "services/serial_manager.h"
 
@@ -41,6 +43,10 @@ extern "C" void app_main(void)
         ret = nvs_flash_init();
     }
     ESP_ERROR_CHECK(ret);
+
+    /* Enable Task WDT — panics (reboot) if any subscribed task doesn't reset within timeout */
+    esp_task_wdt_init(WATCHDOG_TIMEOUT_MS, true);
+    /* Interrupt WDT enabled via Kconfig: CONFIG_ESP_INT_WDT=y in sdkconfig */
 
     /* ================================================================== */
     /* 2. Initialise serial output                                        */
@@ -80,6 +86,9 @@ extern "C" void app_main(void)
     /* 8. Spawn all FreeRTOS sensor tasks                                 */
     /* ================================================================== */
     sensorManager.startTasks();
+    esp_task_wdt_add(sensorManager.getTaskHandle(SensorType::DHT22_TEMPERATURE));
+    esp_task_wdt_add(sensorManager.getTaskHandle(SensorType::MQ9_GAS));
+    esp_task_wdt_add(sensorManager.getTaskHandle(SensorType::KY026_FLAME));
 
     /* ================================================================== */
     /* 9. Transition to RUNNING — system fully operational                */
@@ -90,13 +99,25 @@ extern "C" void app_main(void)
     /* 10. Start the health monitor task (lowest priority)                */
     /* ================================================================== */
     taskManager.startMonitorTask();
+    esp_task_wdt_add(taskManager.getTaskHandle());
 
     /* ================================================================== */
-    /* 11. Create MqttManager — MQTT telemetry publisher task              */
+    /* 11. Create AutomationManager — threshold evaluation & actuator      */
+    /* ================================================================== */
+    AutomationManager autoManager;
+    autoManager.init(sensorManager.getReadingQueue(), &errorHandler);
+    autoManager.startTask();
+    esp_task_wdt_add(autoManager.getTaskHandle());
+
+    /* ================================================================== */
+    /* 12. Create MqttManager — MQTT telemetry publisher task              */
     /* ================================================================== */
     MqttManager mqttManager;
     mqttManager.init(sensorManager.getReadingQueue(), &errorHandler, &stateMachine);
+    mqttManager.setAutoManager(&autoManager);
     mqttManager.startMqttTask();
+    esp_task_wdt_add(mqttManager.getTaskHandle());
+    esp_task_wdt_add(NULL);
 
     /* ================================================================== */
     /* 12. Main loop — queue consumer, alert/error/recovery management    */
@@ -105,6 +126,7 @@ extern "C" void app_main(void)
     SensorReading reading;
 
     while (1) {
+        esp_task_wdt_reset();
         // Receive next sensor reading from the queue (100ms timeout)
         if (xQueueReceive(queue, &reading, pdMS_TO_TICKS(100)) == pdTRUE) {
             // Print the reading via SerialManager

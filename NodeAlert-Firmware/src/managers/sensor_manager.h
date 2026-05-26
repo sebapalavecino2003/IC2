@@ -68,6 +68,21 @@ public:
      */
     QueueHandle_t getReadingQueue() const { return sensor_queue; }
 
+    TaskHandle_t getTaskHandle(SensorType type) const
+    {
+        switch (type) {
+            case SensorType::DHT22_TEMPERATURE:
+            case SensorType::DHT22_HUMIDITY:
+                return task_dht22;
+            case SensorType::MQ9_GAS:
+                return task_mq9;
+            case SensorType::KY026_FLAME:
+                return task_ky026;
+            default:
+                return nullptr;
+        }
+    }
+
     /**
      * @brief Type-safe access to a specific sensor driver
      *

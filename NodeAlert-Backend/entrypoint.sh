@@ -22,6 +22,14 @@ else
   echo "MQTT subscriber credentials not set — skipping MQTT subscription"
 fi
 
-# Start Django development server
-# Phase 6 will switch to gunicorn for production
-python manage.py runserver 0.0.0.0:8000
+# Production toggle: Gunicorn vs runserver (Phase 6, D-05/D-08)
+if [ "${GUNICORN_ENABLED:-false}" = "true" ]; then
+  WORKERS="${GUNICORN_WORKERS:-3}"
+  echo "Starting Gunicorn with ${WORKERS} workers..."
+  exec gunicorn nodealert.wsgi:application \
+    --workers "$WORKERS" \
+    --bind 0.0.0.0:8000
+else
+  echo "Starting Django development server..."
+  python manage.py runserver 0.0.0.0:8000
+fi

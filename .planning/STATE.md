@@ -2,46 +2,53 @@
 gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
-status: Phase 06 planned
-stopped_at: Phase 6 planned — 3 plans created, plan checker PASS
-last_updated: "2026-05-25T21:40:00.000Z"
+status: Phase 06 complete
+stopped_at: Phase 6 executed — all 3 plans implemented, milestone v1.0 complete
+last_updated: "2026-05-25T22:06:00.000Z"
 progress:
   total_phases: 6
-  completed_phases: 5
-  total_plans: 15
-  completed_plans: 14
-  planned_plans: 3
-  percent: 78
+  completed_phases: 6
+  total_plans: 17
+  completed_plans: 17
+  planned_plans: 0
+  percent: 100
 ---
 
 # Project State: NodeAlert IoT
 
 > Last updated: 2026-05-25T21:40
 
+## Milestone Complete
+
+**🎉 Milestone v1.0 completado — todas las 6 fases ejecutadas.**
+
 ## Active Phase
 
-**Current:** Phase 6 — Hardening y Documentación (planned)
-**Next:** (none — Phase 6 is final milestone phase)
+**Current:** (none — milestone v1.0 complete)
+**Next:** Milestone v2.0 (planificación pendiente)
 
 ## Progress
 
-**Phases:** 5/6 complete (Phases 1-5 executed, Phase 6 planned)
-**Requirements:** 32/42 complete (estimated)
-**Plans:** 14 executed, 3 planned, 0 pending
+**Phases:** 6/6 complete
+**Requirements:** 42/42 complete (estimated)
+**Plans:** 17 executed, 0 planned, 0 pending
 
 ## Session
 
 - **Last session:** 2026-05-25
-- **Completed:** Phase 6 discussed (5 areas, 18 decisions), Phase 6 planned (3 plans, 1 wave, plan checker PASS), documentation (06-PATTERNS.md, 06-CONTEXT.md, 06-01/02/03-PLAN.md)
-- **Stopped At:** Phase 6 planned — all 3 plans created and verified
+- **Completed:** Phase 6 executed — all 3 plans (ESP32 Watchdog, Servidor Producción, Documentación) implemented and verified.
+  - **06-01:** WDT init + 7 task subscriptions + Last Will + status heartbeat (60s + state transitions)
+  - **06-02:** Gunicorn toggle + nginx reverse proxy + HEALTHCHECKs en 5 contenedores + health endpoints + rate limiting
+  - **06-03:** 7 documentos en Español (README raíz, DEPLOY, ARCHITECTURE, API, READMEs de componente)
+- **Stopped At:** Phase 6 executed — milestone v1.0 complete! 🎉
 
 ## Plans in Phase 6
 
 | Plan | Objective | Status |
 |------|-----------|--------|
-| 06-01 | Watchdog ESP32 — Task WDT (7 tasks), Interrupt WDT, Last Will MQTT, status heartbeat (60s + state transitions) with wifi_rssi/errores_activos | ◆ Planned |
-| 06-02 | Servidor Producción — Gunicorn/nginx, HEALTHCHECKs 5 containers, liveness/readiness endpoints, DRF throttling (5/min login, 100/min API) | ◆ Planned |
-| 06-03 | Documentación — README raíz, DEPLOY, ARCHITECTURE, API, READMEs de componente (firmware/backend/frontend) en Español | ◆ Planned |
+| 06-01 | Watchdog ESP32 — Task WDT (7 tasks), Interrupt WDT, Last Will MQTT, status heartbeat (60s + state transitions) with wifi_rssi/errores_activos | ✅ Done |
+| 06-02 | Servidor Producción — Gunicorn/nginx, HEALTHCHECKs 5 containers, liveness/readiness endpoints, DRF throttling (5/min login, 100/min API) | ✅ Done |
+| 06-03 | Documentación — README raíz, DEPLOY, ARCHITECTURE, API, READMEs de componente (firmware/backend/frontend) en Español | ✅ Done |
 
 ## Plans Completed in Phase 5
 
@@ -96,6 +103,11 @@ progress:
 - **Phase 5 executed:** 3 plans — ESP32 AutomationManager task (3s, priority 2), MQTT command endpoint + override UI, Active Alerts Panel with tabs + acknowledge. All verified (TS compile, Python syntax).
 - **Phase 6 discussed:** 5 areas (watchdog, Gunicorn/nginx, health checks, rate limiting, documentation), 18 decisions (D-01 to D-18). CONTEXT.md committed.
 - **Phase 6 planned:** 3 plans (06-01: ESP32 Watchdog, 06-02: Production Server + Monitoring + Rate Limiting, 06-03: Documentation). Plan checker PASS after 1 revision cycle.
+- **Phase 6 executed:** All 3 plans implemented:
+  - 06-01: ESP32 WDT (esp_task_wdt_init + 7 subscriptions + Last Will), status heartbeat (60s + state transitions, wifi_rssi, errores_activos)
+  - 06-02: Gunicorn toggle in entrypoint.sh, nginx reverse proxy, docker-compose with HEALTHCHECKs (5 containers), health endpoints (liveness/readiness), DRF rate limiting (5/min login, 100/min API)
+  - 06-03: 7 documentation files in Spanish (README, DEPLOY, ARCHITECTURE, API, firmware/backend/frontend READMEs)
+- **🎉 Milestone v1.0 complete!** All 6 phases, 17 plans executed.
 
 ## Project Reference
 

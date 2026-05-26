@@ -42,6 +42,8 @@ public:
      */
     void startMonitorTask();
 
+    TaskHandle_t getTaskHandle() const { return task_handle; }
+
 private:
     SensorManager*  sensor_mgr;         ///< Reference to sensor orchestrator
     StateMachine*   state_mach;         ///< Reference to system state machine
