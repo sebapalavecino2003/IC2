@@ -4,7 +4,7 @@ milestone: v1.0
 milestone_name: milestone
 status: Phase 06 complete
 stopped_at: Phase 6 executed — all 3 plans implemented, milestone v1.0 complete
-last_updated: "2026-05-25T22:06:00.000Z"
+last_updated: "2026-05-25T22:30:00.000Z"
 progress:
   total_phases: 6
   completed_phases: 6
@@ -108,6 +108,7 @@ progress:
   - 06-02: Gunicorn toggle in entrypoint.sh, nginx reverse proxy, docker-compose with HEALTHCHECKs (5 containers), health endpoints (liveness/readiness), DRF rate limiting (5/min login, 100/min API)
   - 06-03: 7 documentation files in Spanish (README, DEPLOY, ARCHITECTURE, API, firmware/backend/frontend READMEs)
 - **🎉 Milestone v1.0 complete!** All 6 phases, 17 plans executed.
+- **Documentos de planificación actualizados:** REQUIREMENTS.md (42/42 requisitos trazados, 41 completos, 1 parcial), ROADMAP.md (todas las fases 100%, 17/17 planes).
 
 ## Project Reference
 
