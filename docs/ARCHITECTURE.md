@@ -20,9 +20,9 @@ NodeAlert IoT es un sistema distribuido de monitoreo ambiental con 4 capas:
                    │  ↓
                    │  Django REST API ←── React Dashboard (MUI)
                    │  (DRF, Gunicorn)       (polling 3s)
-                   │
-                   └── Actuador (relé) ──→ Control local
-                       (AutomationManager)
+                    │
+                    └── Buzzer ──→ Alarma local (3 patrones)
+                        (BuzzerManager)
 ```
 
 ## Componentes
@@ -31,10 +31,10 @@ NodeAlert IoT es un sistema distribuido de monitoreo ambiental con 4 capas:
 
 - **Microcontrolador:** ESP32 con FreeRTOS y ESP-IDF 6.0.1
 - **Máquina de estados:** 6 estados (INIT → STANDBY → RUNNING ↔ ALERT → RECOVERY → ERROR)
-- **Tareas FreeRTOS (7):** Main loop, DHT22, MQ-9, KY-026, Monitor, Automation, MQTT
+- **Tareas FreeRTOS (8):** Main loop, DHT22, MQ-9, KY-026, Monitor, Buzzer, Automation, MQTT
 - **Watchdog:** Task WDT + Interrupt WDT con auto-reboot, 10s timeout
 - **MQTT Publisher:** Telemetría cada 10s, estado cada 60s, eventos en transiciones, Last Will en desconexión
-- **Automatización local:** Evaluación de umbrales sin conexión al servidor, control de actuador con histéresis
+- **Automatización local:** Evaluación de umbrales sin conexión al servidor, activación de alarma por buzzer con 3 niveles de severidad (WARNING/CRITICAL/EMERGENCY) y histéresis
 
 ### Broker Mosquitto
 
@@ -89,3 +89,5 @@ NodeAlert IoT es un sistema distribuido de monitoreo ambiental con 4 capas:
 - Evaluación local en ESP32 sin dependencia del servidor
 - Override remoto vía comandos MQTT desde el servidor
 - Histéresis para evitar oscilación rápida de estados
+- BuzzerManager: tarea RTOS dedicada con patrones no bloqueantes y mutex
+- 3 patrones de alarma según severidad: WARNING (pitido cada 3s), CRITICAL (pitidos rápidos), EMERGENCY (tono continuo)

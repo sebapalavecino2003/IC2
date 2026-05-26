@@ -60,8 +60,8 @@ Todas las rutas bajo `/api/v1/`. Proxy inverso nginx en puerto 80.
 ```
 
 **Comandos (POST /devices/{id}/command/):**
-- `actuator_on` — Activar actuador
-- `actuator_off` — Desactivar actuador
+- `buzzer_on` — Activar buzzer de emergencia (override EMERGENCY)
+- `buzzer_off` — Desactivar buzzer (override)
 - `return_to_auto` — Volver a modo automático
 - `acknowledge_alarm` — Confirmar alarma
 - `update_thresholds` — Actualizar umbrales
@@ -197,7 +197,7 @@ Todos los tópicos usan el prefijo `nodealert/{device_id}/`.
 **Comando (recibido por el ESP32 desde el servidor):**
 ```json
 {
-  "cmd": "actuator_on",
+  "cmd": "buzzer_on",
   "params": {
     "duration_ms": 120000
   }

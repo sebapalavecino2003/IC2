@@ -54,8 +54,8 @@ class DeviceViewSet(viewsets.ModelViewSet):
     def command(self, request, pk=None):
         """Publish an MQTT command to a device (AUTO-04).
 
-        POST body: {"command": "actuator_on", "params": {...}}
-        Valid commands: actuator_on, actuator_off, return_to_auto,
+        POST body: {"command": "buzzer_on", "params": {...}}
+        Valid commands: buzzer_on, buzzer_off, return_to_auto,
                        acknowledge_alarm, update_thresholds
         """
         device = self.get_object()

@@ -68,7 +68,7 @@ La configuración de pines está en `src/config/pins_config.h`:
 | DHT22 (temperatura/humedad) | GPIO 4 |
 | MQ-9 (gas) | GPIO 34 (ADC) |
 | KY-026 (llama) | GPIO 5 (digital), GPIO 35 (ADC) |
-| Relé actuador | GPIO 2 |
+| Buzzer activo | GPIO 2 (alarma sonora) |
 
 ### 4. Verificar health checks
 

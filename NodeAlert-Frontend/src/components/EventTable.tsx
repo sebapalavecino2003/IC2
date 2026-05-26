@@ -19,8 +19,8 @@ const SEVERITY_COLORS: Record<string, 'info' | 'warning' | 'error'> = {
 
 const EVENT_TYPE_LABELS: Record<string, string> = {
   'threshold_crossed': 'Umbral superado',
-  'actuator_on': 'Actuador ON',
-  'actuator_off': 'Actuador OFF',
+  'buzzer_on': 'Buzzer ON',
+  'buzzer_off': 'Buzzer OFF',
   'override': 'Override',
   'thresholds': 'Configuración',
   'flame_detected': 'Llama detectada',

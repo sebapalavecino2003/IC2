@@ -46,8 +46,8 @@ export interface SensorStatuses {
 }
 
 export type OverrideCommand =
-  | 'actuator_on'
-  | 'actuator_off'
+  | 'buzzer_on'
+  | 'buzzer_off'
   | 'return_to_auto'
   | 'acknowledge_alarm'
   | 'update_thresholds'

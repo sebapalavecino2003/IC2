@@ -64,7 +64,7 @@ class LoginSerializer(serializers.Serializer):
 class CommandSerializer(serializers.Serializer):
     """Serializer for device MQTT commands (AUTO-04)."""
     command = serializers.ChoiceField(choices=[
-        'actuator_on', 'actuator_off', 'return_to_auto',
+        'buzzer_on', 'buzzer_off', 'return_to_auto',
         'acknowledge_alarm', 'update_thresholds',
     ])
     params = serializers.JSONField(required=False, default=None)

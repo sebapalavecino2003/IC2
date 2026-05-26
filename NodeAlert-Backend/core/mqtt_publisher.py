@@ -15,7 +15,7 @@ def publish_command(device_id: str, cmd: str, params: dict = None) -> bool:
 
     Args:
         device_id: Device identifier (e.g., 'nodealert-01')
-        cmd: Command name (actuator_on, actuator_off, return_to_auto,
+        cmd: Command name (buzzer_on, buzzer_off, return_to_auto,
              acknowledge_alarm, update_thresholds)
         params: Optional parameters dict for update_thresholds
 
