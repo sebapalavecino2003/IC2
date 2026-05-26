@@ -16,7 +16,6 @@ __pycache__/
 
 # Raspberry Pi — exclude firmware (ESP32, not needed on Pi)
 NodeAlert-Firmware/
-.docs/
 # Raspberry Pi — exclude planning docs (not needed on Pi)
 .planning/
 

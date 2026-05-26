@@ -4,6 +4,9 @@ set -e
 # Run database migrations
 python manage.py migrate --noinput
 
+# Collect static files for nginx serving
+python manage.py collectstatic --noinput
+
 # Create superuser if DJANGO_SUPERUSER_USERNAME and DJANGO_SUPERUSER_PASSWORD are set
 if [ -n "${DJANGO_SUPERUSER_USERNAME:-}" ] && [ -n "${DJANGO_SUPERUSER_PASSWORD:-}" ]; then
   python manage.py createsuperuser \

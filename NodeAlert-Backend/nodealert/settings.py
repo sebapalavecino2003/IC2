@@ -108,6 +108,7 @@ USE_TZ = True
 
 # Static files (CSS, JavaScript, Images)
 STATIC_URL = 'static/'
+STATIC_ROOT = BASE_DIR / 'static'
 
 # Default primary key field type
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
@@ -136,12 +137,19 @@ REST_FRAMEWORK = {
     },
 }
 
-# CORS configuration for frontend Docker container
+# CORS configuration for frontend Docker container + nginx proxy
 CORS_ALLOWED_ORIGINS = [
     "http://localhost:3000",
     "http://127.0.0.1:3000",
     "http://localhost:5173",
     "http://127.0.0.1:5173",
+    "http://localhost:80",
+    "http://127.0.0.1:80",
+    "http://localhost",
 ]
+
+# Allow extra origins via env var (comma-separated) — useful for LAN access via Pi IP
+if os.environ.get('CORS_EXTRA_ORIGINS'):
+    CORS_ALLOWED_ORIGINS.extend(os.environ['CORS_EXTRA_ORIGINS'].split(','))
 
 CORS_ALLOW_CREDENTIALS = True
