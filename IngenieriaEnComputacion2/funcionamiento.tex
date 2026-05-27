@@ -1,0 +1,27 @@
+
+
+El funcionamiento de \textit{NodeAlert IoT} se rige por un algoritmo de control distribuido que prioriza la seguridad y la respuesta inmediata. La lógica está diseñada para operar de forma autónoma en cada nodo, manteniendo la sincronización con el servidor central para el registro y la supervisión remota.
+
+\subsection{Algoritmo de Detección y Decisión}
+Cada nodo periférico ejecuta un ciclo de control basado en prioridades. Siguiendo los conceptos de programación de sistemas embebidos de \citet{valvano2014volume1}, el sistema no solo compara valores contra umbrales estáticos, sino que analiza la tasa de cambio de las variables para evitar falsos positivos.
+
+\begin{itemize}
+    \item \textbf{ALERT\_NONE (Sin Alerta):} El sistema realiza lecturas peri\'odicas de temperatura, humedad, gas y flama. Si todos los valores se mantienen en rangos normales, no se activa ninguna alarma.
+    \item \textbf{WARNING (Precauci\'on):} Si la temperatura supera los 35$^{\circ}$C, la humedad sale del rango 20\%--80\%, o el gas supera 500 ppm, el sistema incrementa la frecuencia de publicaci\'on MQTT y eleva el nivel de alerta.
+    \item \textbf{CRITICAL (Cr\'itico):} Si la temperatura supera los 45$^{\circ}$C o el gas supera 800 ppm, se activa el buzzer con un patr\'on de dos tonos r\'apidos y se publica un evento urgente en MQTT.
+    \item \textbf{EMERGENCY (Emergencia):} Ante la detecci\'on confirmada de llama (KY-026) o niveles cr\'iticos de gas (MQ-9 $>$ 1000 ppm), el nodo activa el buzzer con un tono continuo y publica un mensaje de prioridad m\'axima.
+\end{itemize}
+
+\subsection{Automatizaci\'on y Actuaci\'on Local}
+La l\'ogica de control local es fundamental para la tolerancia a fallos. El actuador (buzzer) se activa mediante una se\~nal digital PWM desde el GPIO2 del ESP32, excitando un transistor 2N2222. Esta acci\'on es independiente de la conectividad WiFi; si el nodo pierde conexi\'on con el \textit{broker}, la l\'ogica de seguridad sigue operativa para preservar la integridad del entorno f\'isico \citep{valvano2014volume2}.
+
+\subsection{Transiciones con Hist\'eresis}
+Para evitar activaciones y desactivaciones r\'apidas del buzzer, se implementa un margen de hist\'eresis del 10\% en todos los umbrales. Por ejemplo, la transici\'on de CRITICAL a WARNING requiere que la temperatura descienda por debajo de 31.5$^{\circ}$C (en lugar de los 35$^{\circ}$C de activaci\'on), eliminando el efecto de rebote en la se\~nal del sensor.
+
+\subsection{Gesti\'on de Alertas Remotas}
+Una vez que el mensaje de alerta llega al \textit{backend} en Django, se dispara la l\'ogica de notificaci\'on:
+\begin{enumerate}
+    \item Registro en la base de datos para auditor\'ia hist\'orica.
+    \item El dashboard web, mediante polling peri\'odico cada 10 segundos a la API REST, refleja el nuevo estado y permite enviar comandos de override (acknowledge\_alarm) a los nodos.
+\end{enumerate}
+% FOTO REAL: maquina_estados_NodeAlert IoT.png

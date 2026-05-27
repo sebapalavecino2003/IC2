@@ -4,7 +4,7 @@ import { useParams } from 'react-router-dom'
 import TempChart from '../components/TempChart'
 import HumidityChart from '../components/HumidityChart'
 import api from '../services/api'
-import type { Device, Reading } from '../types'
+import type { Device, Reading, PaginatedResponse } from '../types'
 
 export default function DeviceDetailPage() {
   const { id } = useParams()
@@ -15,11 +15,11 @@ export default function DeviceDetailPage() {
   useEffect(() => {
     Promise.all([
       api.get<Device>(`/devices/${id}`),
-      api.get<Reading[]>('/readings', { params: { device_id: id, ordering: '-timestamp', limit: 100 } }),
+      api.get<PaginatedResponse<Reading>>('/readings', { params: { device_id: id, ordering: '-timestamp' } }),
     ])
       .then(([d, r]) => {
         setDevice(d.data)
-        setReadings(r.data)
+        setReadings(r.data.results)
       })
       .catch(() => {})
       .finally(() => setLoading(false))

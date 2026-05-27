@@ -1,5 +1,5 @@
 """DRF viewsets for core models: Device, Reading, Event."""
-from rest_framework import status, viewsets, filters
+from rest_framework import status, viewsets, filters, permissions
 from rest_framework.decorators import action
 from rest_framework.permissions import AllowAny
 from rest_framework.response import Response
@@ -12,7 +12,7 @@ import os
 from .models import Device, Reading, Event
 from .mqtt_publisher import publish_command
 from .serializers import (DeviceSerializer, ReadingSerializer, EventSerializer,
-                          LoginSerializer, CommandSerializer)
+                          LoginSerializer, CommandSerializer, UserSerializer)
 
 
 class ReadingFilter(django_filters.FilterSet):
@@ -35,15 +35,10 @@ class ReadingFilter(django_filters.FilterSet):
 
 
 class DeviceViewSet(viewsets.ModelViewSet):
-    """Full CRUD viewset for Device model.
-
-    Supports filtering by is_active, location.
-    Supports search by name, device_id, location.
-    Supports ordering by created_at, name, device_id.
-    """
-
+    """Full CRUD. Filters: is_active, location. Search: name, device_id, location. Ordering."""
     queryset = Device.objects.all()
     serializer_class = DeviceSerializer
+    permission_classes = [permissions.DjangoModelPermissions]
     filter_backends = [django_filters.rest_framework.DjangoFilterBackend,
                        filters.SearchFilter, filters.OrderingFilter]
     filterset_fields = ['is_active', 'location']
@@ -96,14 +91,10 @@ class ReadingViewSet(viewsets.ReadOnlyModelViewSet):
 
 
 class EventViewSet(viewsets.ModelViewSet):
-    """Full CRUD viewset for Event model.
-
-    Supports filtering by severity, resolved.
-    Supports ordering by timestamp, severity.
-    """
-
+    """Full CRUD. Filters: severity, resolved."""
     queryset = Event.objects.all()
     serializer_class = EventSerializer
+    permission_classes = [permissions.DjangoModelPermissions]
     filter_backends = [django_filters.rest_framework.DjangoFilterBackend,
                        filters.OrderingFilter]
     filterset_fields = ['severity', 'resolved']
@@ -128,6 +119,14 @@ class LoginView(APIView):
         user = serializer.validated_data['user']
         token, created = Token.objects.get_or_create(user=user)
         return Response({'token': token.key}, status=status.HTTP_200_OK)
+
+
+class MeView(APIView):
+    """GET /api/v1/auth/me/ — Returns current user info with role."""
+
+    def get(self, request):
+        serializer = UserSerializer(request.user)
+        return Response(serializer.data)
 
 
 class LivenessHealthView(APIView):

@@ -101,8 +101,8 @@ class Command(BaseCommand):
         sensor_map = {
             'temperature':    ('temperature', payload.get('temperature'), '°C'),
             'humidity':       ('humidity',    payload.get('humidity'),    '%'),
-            'gas_ppm':        ('gas',         payload.get('gas_ppm'),     'ppm'),
-            'flame_detected': ('flame',       payload.get('flame_detected'), 'bool'),
+            'gas_ppm':        ('gas',         payload.get('gas_ppm'),     'ADC'),
+            'flame_detected': ('flame',       payload.get('flame_detected'), 'ADC'),
         }
 
         readings = []

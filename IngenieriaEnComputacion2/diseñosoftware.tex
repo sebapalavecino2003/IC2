@@ -1,0 +1,30 @@
+
+El componente de software de \textit{NodeAlert IoT} se divide en tres dominios críticos: el firmware de los nodos periféricos, la lógica del servidor central y la interfaz de usuario, se ha adoptado un enfoque modular que facilita la depuración y la actualización del sistema.
+
+\subsection{Firmware y Gestión de Tareas (FreeRTOS)}
+A diferencia de los sistemas tradicionales basados en un único bucle de ejecución, los nodos ESP32 operan bajo el núcleo de \textbf{FreeRTOS}. Esto permite una ejecución concurrente de tareas con diferentes niveles de prioridad, un concepto fundamental para sistemas de tiempo real \citep{valvano2014volume2}.
+\begin{itemize}
+    \item \textbf{Tarea de Adquisición:} Encargada del muestreo de sensores en intervalos precisos.
+    \item \textbf{Tarea de Comunicación:} Gestiona la conexión Wi-Fi y la publicación de mensajes MQTT sin bloquear la lectura de los sensores.
+    \item \textbf{Manejo de Interrupciones:} Se utilizan interrupciones externas para sensores críticos como el de llama (KY-026), asegurando una respuesta inmediata que no dependa del tiempo de ciclo del software.
+\end{itemize}
+
+\subsection{Backend y Persistencia de Datos (Django)}
+El servidor central, alojado en la Raspberry Pi, utiliza el \textit{framework} Django Esta elección permite manejar la lógica de negocio y la persistencia en base de datos mediante un ORM (\textit{Object-Relational Mapping}) robusto. 
+\begin{itemize}
+    \item \textbf{MQTT Subscriber:} Un servicio en segundo plano escucha constantemente los tópicos de los sensores y almacena las lecturas.
+    \item \textbf{API REST:} Provee los puntos de acceso para que el \textit{frontend} pueda consultar históricos y estados actuales.
+\end{itemize}
+
+\subsection{Frontend e Interfaces de Usuario}
+Se ha desarrollado un \textbf{Dashboard Web (React + Material UI)} como interfaz principal de monitoreo:
+\begin{enumerate}
+    \item \textbf{Dashboard en Tiempo Real:} Aplicaci\'on de una sola p\'agina (\textit{SPA}) que muestra tarjetas con las \'ultimas lecturas de cada nodo, gr\'aficos de evoluci\'on temporal con Chart.js, e indicadores de estado (conectado/desconectado/nivel de alerta).
+    \item \textbf{Panel de Control:} Permite enviar comandos remotos a los nodos (silencio de alarma, override manual del buzzer, retorno a autom\'atico) mediante peticiones POST a la API REST.
+    \item \textbf{Historial de Eventos:} Tabla paginada con todos los eventos de alerta registrados, incluyendo timestamp, dispositivo, tipo de sensor, valor y severidad.
+\end{enumerate}
+
+% FOTO REAL: diagrama_tareas_rtos.png
+
+% --- LUGAR PARA DIAGRAMA DE CLASES O FLUJO BACKEND ---
+% FOTO REAL: arquitectura_software_django.png

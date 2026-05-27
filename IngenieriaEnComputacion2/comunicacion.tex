@@ -1,0 +1,34 @@
+
+
+La eficiencia de un sistema IoT distribuido reside en la robustez de sus protocolos de comunicación. En \textit{NodeAlert IoT}, se ha implementado una arquitectura de comunicación asíncrona que garantiza la entrega de datos críticos con una latencia mínima, siguiendo los estándares de conectividad para sistemas embebidos de 32 bits \citep{mazidi2014}.
+
+\subsection{Protocolo de Mensajería: MQTT}
+Se ha seleccionado el protocolo MQTT (\textit{Message Queuing Telemetry Transport}) como el eje central de la red. Seg\'un la literatura técnica, este protocolo es ideal para redes con ancho de banda limitado y dispositivos de bajos recursos \citep{valvano2014volume2}.
+\begin{itemize}
+    \item \textbf{Modelo Publicación/Suscripción:} Los nodos ESP32 publican sus lecturas en tópicos específicos, mientras que el backend Django se suscribe para procesar y almacenar la información. Se definen los siguientes tópicos:
+    \begin{itemize}
+        \item \texttt{nodealert/\{device\_id\}/telemetry} (QoS 0): Lecturas peri\'odicas de temperatura, humedad, gas y flama.
+        \item \texttt{nodealert/\{device\_id\}/events} (QoS 1): Eventos de alerta con severidad (WARNING, CRITICAL, EMERGENCY).
+        \item \texttt{nodealert/\{device\_id\}/status} (QoS 1): Estado del nodo (uptime, heap libre, RSSI, estado del sistema).
+        \item \texttt{nodealert/\{device\_id\}/commands} (QoS 1): Canal de retorno para enviar comandos desde el servidor a los nodos.
+    \end{itemize}
+\end{itemize}
+
+\subsection{Serialización de Datos: JSON}
+Para el intercambio de información entre los nodos ESP32 y el servidor Django, se utiliza el formato JSON (\textit{JavaScript Object Notation}). Este estándar permite una representación de datos estructurada y fácil de parsear en diferentes lenguajes de programación. En los nodos ESP32 se implementa un parser JSON sin uso de memoria dinámica (heap), escaneando caracteres manualmente para evitar fragmentación de memoria \citep{deitel2004}.
+
+\subsection{Interfaz de Datos: API REST}
+La comunicación entre el servidor central y la interfaz de usuario se realiza mediante una API RESTful:
+\begin{itemize}
+    \item \textbf{GET /api/v1/devices/:} Lista de dispositivos registrados.
+    \item \textbf{GET /api/v1/readings/:} Consulta de lecturas históricas con filtros por dispositivo, tipo de sensor y rango de tiempo.
+    \item \textbf{GET /api/v1/events/:} Consulta de eventos y alertas.
+    \item \textbf{POST /api/v1/devices/\{id\}/command/:} Envío de comandos remotos a los nodos (buzzer\_on, buzzer\_off, return\_to\_auto, acknowledge\_alarm, update\_thresholds).
+    \item El frontend React realiza polling peri\'odico cada 10 segundos para actualizar el dashboard.
+\end{itemize}
+
+\subsection{Capa de Red: WiFi y Seguridad}
+La conectividad se establece mediante el estándar IEEE 802.11 (WiFi). Para asegurar la integridad de la red, se implementa cifrado WPA2. El broker Mosquitto requiere autenticación mediante usuario y contraseña, y cuenta con persistencia de mensajes retenidos para que los nodos reciban los últimos comandos al reconectarse \citep{valvano2014volume1}.
+
+% --- LUGAR PARA DIAGRAMA DE ARQUITECTURA MQTT ---
+% FOTO REAL: protocolo_mqtt_schema.png

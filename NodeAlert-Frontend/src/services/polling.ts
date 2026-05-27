@@ -1,5 +1,5 @@
 import api from './api'
-import type { Reading, Event as AlertEvent } from '../types'
+import type { Reading, Event as AlertEvent, PaginatedResponse } from '../types'
 
 export interface PollingResult {
   latestReadings: Reading[]
@@ -7,15 +7,15 @@ export interface PollingResult {
 }
 
 export async function fetchLatestReadings(): Promise<Reading[]> {
-  const res = await api.get<Reading[]>('/readings', {
-    params: { ordering: '-timestamp', limit: 50 },
+  const res = await api.get<PaginatedResponse<Reading>>('/readings', {
+    params: { ordering: '-timestamp' },
   })
-  return res.data
+  return res.data.results
 }
 
 export async function fetchUnresolvedEvents(): Promise<AlertEvent[]> {
-  const res = await api.get<AlertEvent[]>('/events', {
-    params: { resolved: false, ordering: '-timestamp', limit: 10 },
+  const res = await api.get<PaginatedResponse<AlertEvent>>('/events', {
+    params: { resolved: false, ordering: '-timestamp' },
   })
-  return res.data
+  return res.data.results
 }

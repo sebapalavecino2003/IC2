@@ -36,8 +36,8 @@ function deriveStatuses(latest: LatestReadings): SensorStatuses {
   return {
     temperature: temp > 45 ? 'critical' : temp >= 35 ? 'warning' : 'normal',
     humidity: (hum < 20 || hum > 80) ? 'warning' : 'normal',
-    gas: gas > 300 ? 'critical' : gas >= 200 ? 'warning' : 'normal',
-    flame: flame > 0 ? 'critical' : 'normal',
+    gas: gas > 2500 ? 'critical' : gas >= 2000 ? 'warning' : 'normal',
+    flame: flame > 2000 ? 'critical' : flame >= 1500 ? 'warning' : 'normal',
   }
 }
 
@@ -70,7 +70,7 @@ export function AlarmProvider({ children }: { children: ReactNode }) {
   const alarmActive = statuses.gas === 'critical' || statuses.flame === 'critical'
   const alarmMessage = alarmActive
     ? statuses.gas === 'critical'
-      ? 'Gas crítico detectado (>300 PPM)'
+      ? 'Gas crítico detectado'
       : 'Flama detectada'
     : null
 

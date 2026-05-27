@@ -2,7 +2,7 @@
 from django.contrib.auth import authenticate
 from django.utils import timezone
 from rest_framework import serializers
-from .models import Device, Reading, Event
+from .models import Device, Reading, Event, User
 
 
 class DeviceSerializer(serializers.ModelSerializer):
@@ -62,9 +62,19 @@ class LoginSerializer(serializers.Serializer):
 
 
 class CommandSerializer(serializers.Serializer):
-    """Serializer for device MQTT commands (AUTO-04)."""
     command = serializers.ChoiceField(choices=[
         'buzzer_on', 'buzzer_off', 'return_to_auto',
         'acknowledge_alarm', 'update_thresholds',
     ])
     params = serializers.JSONField(required=False, default=None)
+
+
+class UserSerializer(serializers.ModelSerializer):
+    role = serializers.SerializerMethodField()
+
+    class Meta:
+        model = User
+        fields = ['id', 'username', 'role', 'is_staff']
+
+    def get_role(self, obj):
+        return 'admin' if obj.groups.filter(name='admin').exists() else 'analyst'

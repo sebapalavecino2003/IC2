@@ -1,0 +1,30 @@
+
+Para el desarrollo de \textit{NodeAlert IoT}, se adopta una metodología de diseño incremental y modular, lo que permite validar cada componente del sistema distribuido de forma independiente antes de su integración final. Este enfoque garantiza que los errores se identifiquen en etapas tempranas, siguiendo los principios de aseguramiento de calidad en ingeniería \citep{alexander2006}.
+
+\subsection{Fase 1: Investigación y Selección de Componentes}
+En esta etapa inicial, se analizan los requisitos de detección y comunicación. Se seleccionan los sensores y microcontroladores basándose en su precisión y compatibilidad con sistemas operativos de tiempo real.
+
+\subsection{Fase 2: Prototipado y Firmware de Nodos (ESP32)}
+Se procede con el diseño del firmware para los nodos periféricos. 
+\begin{itemize}
+    \item Implementación de tareas en \textbf{FreeRTOS}.
+    \item Configuración de pilas de protocolos Wi-Fi y MQTT.
+    \item Validación de la captura de datos en tiempo real mediante técnicas de depuración de sistemas embebidos \citep{valvano2014volume1}.
+\end{itemize}
+
+\subsection{Fase 3: Infraestructura de Red}
+Despliegue del \textit{broker} MQTT Mosquitto y configuración de la Raspberry Pi como servidor central. Se establecen los tópicos de comunicación y se verifica la estabilidad del flujo de mensajes (\textit{throughput}) entre los nodos y el servidor, un paso crítico en interfaces de tiempo real \citep{valvano2014volume2}.
+
+\subsection{Fase 4: Desarrollo del Backend y Dashboard}
+Implementación del servidor Django para la persistencia de datos y desarrollo de la interfaz de usuario en React. En esta etapa se implementa el subscriptor MQTT en Django para la ingesta de lecturas y la API REST para consultas y comandos.
+
+\subsection{Fase 5: Integración y Pruebas de Campo}
+Una vez desarrollados los módulos, se procede a la integración total. Se realizan pruebas de estrés para evaluar:
+\begin{itemize}
+    \item Latencia de las alertas ante detecciones críticas.
+    \item Comportamiento del sistema ante la desconexión de uno de los nodos (tolerancia a fallos).
+    \item Estabilidad del sistema bajo operación continua 24/7.
+\end{itemize}
+
+\subsection{Fase 6: Automatización y Optimización}
+Fase final donde se ajustan los umbrales de decisión automática con histéresis y se optimiza el uso de recursos en los nodos periféricos (prioridades de tareas, tamaños de pila).

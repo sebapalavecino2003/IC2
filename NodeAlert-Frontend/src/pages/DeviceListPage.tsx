@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react'
 import { Container, Typography, Card, CardContent, Grid, Chip, Box, CircularProgress } from '@mui/material'
 import { useNavigate } from 'react-router-dom'
 import api from '../services/api'
-import type { Device } from '../types'
+import type { Device, PaginatedResponse } from '../types'
 
 export default function DeviceListPage() {
   const navigate = useNavigate()
@@ -10,8 +10,8 @@ export default function DeviceListPage() {
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    api.get<Device[]>('/devices')
-      .then((res) => setDevices(res.data))
+    api.get<PaginatedResponse<Device>>('/devices')
+      .then((res) => setDevices(res.data.results))
       .catch(() => {})
       .finally(() => setLoading(false))
   }, [])

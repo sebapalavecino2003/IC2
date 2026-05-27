@@ -44,10 +44,10 @@ export default function SummaryBar() {
           <SensorGauge label="Humedad" value={latest.humidity?.value ?? null} unit={latest.humidity?.unit ?? '%'} status={statuses.humidity} />
         </Grid>
         <Grid item xs={6} sm={3}>
-          <SensorGauge label="Gas" value={latest.gas?.value ?? null} unit={latest.gas?.unit ?? 'PPM'} status={statuses.gas} />
+          <SensorGauge label="Gas" value={latest.gas?.value ?? null} unit={latest.gas?.unit ?? 'ADC'} status={statuses.gas} />
         </Grid>
         <Grid item xs={6} sm={3}>
-          <SensorGauge label="Llama" value={latest.flame?.value ?? null} unit={latest.flame?.unit ?? '—'} status={statuses.flame} />
+          <SensorGauge label="Llama" value={latest.flame?.value ?? null} unit={latest.flame?.unit ?? 'ADC'} status={statuses.flame} />
         </Grid>
       </Grid>
     </Box>

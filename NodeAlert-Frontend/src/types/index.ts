@@ -61,3 +61,17 @@ export interface OverrideState {
   active: boolean
   mode: 'auto' | 'manual'
 }
+
+export interface PaginatedResponse<T> {
+  count: number
+  next: string | null
+  previous: string | null
+  results: T[]
+}
+
+export interface UserInfo {
+  id: number
+  username: string
+  role: 'admin' | 'analyst'
+  is_staff: boolean
+}

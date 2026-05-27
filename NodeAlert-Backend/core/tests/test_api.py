@@ -12,10 +12,19 @@ from core.models import Device, Reading, Event
 
 
 def _auth_client():
-    """Return an APIClient with a valid auth token."""
-    user = get_user_model().objects.create_user(
+    """Return an APIClient with a valid auth token for an admin user."""
+    from django.contrib.auth.models import Permission
+    from django.contrib.contenttypes.models import ContentType
+
+    User = get_user_model()
+    user = User.objects.create_user(
         username='testuser', password='testpass123'
     )
+    # Grant all Device, Event, Reading permissions for test coverage
+    ctypes = ContentType.objects.get_for_models(Device, Event, Reading).values()
+    perms = Permission.objects.filter(content_type__in=ctypes)
+    user.user_permissions.add(*perms)
+
     token, _ = Token.objects.get_or_create(user=user)
     client = APIClient()
     client.credentials(HTTP_AUTHORIZATION=f'Token {token.key}')
