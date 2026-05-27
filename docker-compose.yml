@@ -8,7 +8,6 @@ volumes:
   mosquitto_data:
   mosquitto_log:
   mysql_data:
-  static_volume:
 
 services:
   mosquitto:
@@ -24,47 +23,11 @@ services:
       - nodealert-net
     restart: unless-stopped
     healthcheck:
-      test: ["CMD", "mosquitto_sub", "-t", "$SYS/#", "-C", "1"]
+      test: ["CMD", "mosquitto_sub", "-t", "\$SYS/#", "-C", "1"]
       interval: 30s
       timeout: 10s
       retries: 3
       start_period: 10s
-
-  django:
-    build: ./NodeAlert-Backend
-    container_name: django
-    env_file: .env
-    volumes:
-      - static_volume:/app/static
-    depends_on:
-      mysql:
-        condition: service_healthy
-      - mosquitto
-    networks:
-      - nodealert-net
-    restart: unless-stopped
-    healthcheck:
-      test: ["CMD", "curl", "--fail", "http://localhost:8000/api/v1/health/"]
-      interval: 30s
-      timeout: 10s
-      retries: 5
-      start_period: 40s
-
-  frontend:
-    build: ./NodeAlert-Frontend
-    container_name: frontend
-    ports:
-      - "3000:80"
-    depends_on:
-      - django
-    networks:
-      - nodealert-net
-    restart: unless-stopped
-    healthcheck:
-      test: ["CMD", "curl", "--fail", "http://localhost:80/"]
-      interval: 30s
-      timeout: 10s
-      retries: 3
 
   mysql:
     image: mysql:8.0
@@ -82,16 +45,30 @@ services:
       retries: 5
       start_period: 30s
 
-  nginx:
-    build: ./nginx
-    container_name: nginx
-    ports:
-      - "80:80"
-    volumes:
-      - static_volume:/app/static:ro
+  django:
+    build: ./NodeAlert-Backend
+    container_name: django
+    env_file: .env
     depends_on:
-      django:
+      mysql:
         condition: service_healthy
+    networks:
+      - nodealert-net
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "--fail", "http://localhost:8000/api/v1/health/"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 40s
+
+  frontend:
+    build: ./NodeAlert-Frontend
+    container_name: frontend
+    ports:
+      - "3000:80"
+    depends_on:
+      - django
     networks:
       - nodealert-net
     restart: unless-stopped

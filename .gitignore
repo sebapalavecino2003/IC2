@@ -12,10 +12,10 @@ __pycache__/
 
 # VS Code
 .vscode/
-
+IngenieriaEnComputacion2/
 # macOS
 .DS_Store
-
+Molotica/
 # Raspberry Pi — exclude firmware (ESP32, not needed on Pi)
 NodeAlert-Firmware/
 # Raspberry Pi — exclude planning docs (not needed on Pi)
