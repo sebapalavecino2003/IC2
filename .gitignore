@@ -12,7 +12,7 @@ __pycache__/
 IngenieriaEnComputacion2/
 # macOS
 .DS_Store
-Molotica/
+Molotica
 # Raspberry Pi — exclude firmware (ESP32, not needed on Pi)
 NodeAlert-Firmware/
 # Raspberry Pi — exclude planning docs (not needed on Pi)
