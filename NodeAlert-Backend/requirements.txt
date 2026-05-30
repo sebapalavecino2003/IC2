@@ -1,8 +1,10 @@
+# Dependencias Python del backend NodeAlert.
+# Versiones fijadas con límites superior e inferior para evitar
+# roturas por cambios breaking en majors.
 django>=5.0,<5.1
 djangorestframework>=3.15,<3.16
 django-filter>=24.1,<25
 mysqlclient>=2.2,<3
-python-dotenv>=1.0,<2
 gunicorn>=22.0,<23
 paho-mqtt>=2.0,<3
 django-cors-headers>=4.0.0

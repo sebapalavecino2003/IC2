@@ -1,16 +1,9 @@
 #!/bin/bash
 # =============================================================================
-# NodeAlert IoT — Single-command deployment script
+# NodeAlert IoT — Deployment script (configuración hardcodeada)
 # =============================================================================
-# This script automates the complete deployment of the NodeAlert IoT backend:
-#   1. Architecture detection (arm64 / amd64)
-#   2. Interactive configuration prompts
-#   3. .env file generation
-#   4. Mosquitto password file generation
-#   5. Docker Compose service startup
-#   6. Django database migrations
-#   7. Django superuser creation
-#   8. Firmware configuration header generation
+# Este script despliega el stack NodeAlert IoT. Las credenciales están
+# hardcodeadas en el código. Editá docs/contraseñas.md para cambiarlas.
 #
 # Usage: ./setup.sh [OPTIONS]
 #   --help, -h    Show this help message and exit
@@ -26,14 +19,12 @@ show_help() {
 Usage: ./setup.sh [OPTIONS]
 
 Deploy NodeAlert IoT backend stack (Mosquitto + MySQL + Django).
-Generates firmware configuration headers for ESP32 compilation.
 
 Options:
   --help, -h    Show this help message and exit
 
-Environment:
-  All configuration is collected interactively.
-  Generated files: .env, mosquitto_passwd, firmware config headers.
+Las credenciales están hardcodeadas en el código.
+Editá docs/contraseñas.md para cambiarlas.
 EOF
   exit 0
 }
@@ -41,6 +32,27 @@ EOF
 if [ "${1:-}" = "--help" ] || [ "${1:-}" = "-h" ]; then
   show_help
 fi
+
+# Credenciales hardcodeadas para el despliegue.
+# En un entorno productivo, estas deberían leerse de variables de
+# entorno o un vault de secretos.
+MQTT_BROKER_USER="nodealert_gateway"
+MQTT_BROKER_PASSWORD="test_password"
+MQTT_BROKER_IP="10.1.1.10"
+FIRMWARE_MQTT_USER="nodealert_esp32"
+FIRMWARE_MQTT_PASSWORD="test_password"
+FIRMWARE_DEVICE_ID="nodealert-01"
+MQTT_SUBSCRIBER_USER="mqtt_subscriber"
+MQTT_SUBSCRIBER_PASSWORD="test_password"
+MYSQL_ROOT_PASSWORD="root_password"
+MYSQL_DATABASE="nodealert"
+MYSQL_USER="nodealert"
+MYSQL_PASSWORD="db_password"
+DJANGO_SUPERUSER_USERNAME="admin"
+DJANGO_SUPERUSER_EMAIL="admin@nodealert.local"
+DJANGO_SUPERUSER_PASSWORD="admin_password"
+WIFI_SSID="IC-2.4G"
+WIFI_PASS="1nf0rm4t1c4_2025"
 
 # ---------------------------------------------------------------------------
 # B. Architecture Detection (D-21)
@@ -66,160 +78,7 @@ echo ""
 echo "Detected architecture: $ARCH_LABEL"
 echo "Docker images support multi-arch automatically."
 echo ""
-
-# ---------------------------------------------------------------------------
-# C. Interactive Configuration Prompts
-# ---------------------------------------------------------------------------
-echo "============================================="
-echo " Configuration"
-echo "============================================="
-echo "Enter values or press Enter to accept defaults."
-echo ""
-
-# WiFi (for firmware config generation)
-read -r -p "WiFi SSID [NodeAlert-IoT]: " WIFI_SSID
-WIFI_SSID="${WIFI_SSID:-NodeAlert-IoT}"
-
-read -r -p "WiFi Password: " WIFI_PASS
-WIFI_PASS="${WIFI_PASS:-}"
-
-# MQTT Broker
-read -r -p "MQTT Broker User [nodealert_gateway]: " MQTT_BROKER_USER
-MQTT_BROKER_USER="${MQTT_BROKER_USER:-nodealert_gateway}"
-
-read -r -p "MQTT Broker Password: " MQTT_BROKER_PASSWORD
-MQTT_BROKER_PASSWORD="${MQTT_BROKER_PASSWORD:-}"
-
-while [ -z "$MQTT_BROKER_PASSWORD" ]; do
-  read -r -p "MQTT Broker Password (required): " MQTT_BROKER_PASSWORD
-done
-
-# Firmware MQTT Broker IP (the Raspberry Pi's LAN IP)
-read -r -p "Firmware MQTT Broker IP/Hostname (Raspberry Pi LAN IP): " MQTT_BROKER_IP
-MQTT_BROKER_IP="${MQTT_BROKER_IP:-}"
-
-while [ -z "$MQTT_BROKER_IP" ]; do
-  read -r -p "Firmware MQTT Broker IP/Hostname (required — e.g. 192.168.1.100): " MQTT_BROKER_IP
-done
-
-# MQTT Firmware Credentials (for ESP32 MQTT_USER/MQTT_PASS, D-19)
-read -r -p "Firmware MQTT User [nodealert_esp32]: " FIRMWARE_MQTT_USER
-FIRMWARE_MQTT_USER="${FIRMWARE_MQTT_USER:-nodealert_esp32}"
-
-read -r -p "Firmware MQTT Password: " FIRMWARE_MQTT_PASSWORD
-FIRMWARE_MQTT_PASSWORD="${FIRMWARE_MQTT_PASSWORD:-}"
-
-while [ -z "$FIRMWARE_MQTT_PASSWORD" ]; do
-  read -r -p "Firmware MQTT Password (required): " FIRMWARE_MQTT_PASSWORD
-done
-
-read -r -p "Firmware Device ID [nodealert-01]: " FIRMWARE_DEVICE_ID
-FIRMWARE_DEVICE_ID="${FIRMWARE_DEVICE_ID:-nodealert-01}"
-
-# MQTT Subscriber credentials (for Django management command, D-17)
-read -r -p "MQTT Subscriber User [mqtt_subscriber]: " MQTT_SUBSCRIBER_USER
-MQTT_SUBSCRIBER_USER="${MQTT_SUBSCRIBER_USER:-mqtt_subscriber}"
-
-read -r -p "MQTT Subscriber Password: " MQTT_SUBSCRIBER_PASSWORD
-MQTT_SUBSCRIBER_PASSWORD="${MQTT_SUBSCRIBER_PASSWORD:-}"
-
-while [ -z "$MQTT_SUBSCRIBER_PASSWORD" ]; do
-  read -r -p "MQTT Subscriber Password (required): " MQTT_SUBSCRIBER_PASSWORD
-done
-
-# MySQL
-read -r -p "MySQL Root Password: " MYSQL_ROOT_PASSWORD
-MYSQL_ROOT_PASSWORD="${MYSQL_ROOT_PASSWORD:-}"
-
-while [ -z "$MYSQL_ROOT_PASSWORD" ]; do
-  read -r -p "MySQL Root Password (required): " MYSQL_ROOT_PASSWORD
-done
-
-read -r -p "MySQL Database Name [nodealert]: " MYSQL_DATABASE
-MYSQL_DATABASE="${MYSQL_DATABASE:-nodealert}"
-
-read -r -p "MySQL User [nodealert]: " MYSQL_USER
-MYSQL_USER="${MYSQL_USER:-nodealert}"
-
-read -r -p "MySQL Password: " MYSQL_PASSWORD
-MYSQL_PASSWORD="${MYSQL_PASSWORD:-}"
-
-while [ -z "$MYSQL_PASSWORD" ]; do
-  read -r -p "MySQL Password (required): " MYSQL_PASSWORD
-done
-
-# Django
-DJANGO_SECRET_KEY=$(python3 -c "import secrets; print(secrets.token_urlsafe(50))" 2>/dev/null || echo "")
-if [ -z "$DJANGO_SECRET_KEY" ]; then
-  # Fallback if python3 not available
-  DJANGO_SECRET_KEY="django-insecure-$(date +%s)-$$-$(hostname)"
-fi
-read -r -p "Django Secret Key (auto-generated: ${DJANGO_SECRET_KEY:0:20}...): " DJANGO_SECRET_KEY_INPUT
-DJANGO_SECRET_KEY="${DJANGO_SECRET_KEY_INPUT:-$DJANGO_SECRET_KEY}"
-
-read -r -p "Django Debug (False for production) [False]: " DJANGO_DEBUG
-DJANGO_DEBUG="${DJANGO_DEBUG:-False}"
-
-read -r -p "Django Superuser Username [admin]: " DJANGO_SUPERUSER_USERNAME
-DJANGO_SUPERUSER_USERNAME="${DJANGO_SUPERUSER_USERNAME:-admin}"
-
-read -r -p "Django Superuser Email [admin@nodealert.local]: " DJANGO_SUPERUSER_EMAIL
-DJANGO_SUPERUSER_EMAIL="${DJANGO_SUPERUSER_EMAIL:-admin@nodealert.local}"
-
-read -r -p "Django Superuser Password: " DJANGO_SUPERUSER_PASSWORD
-DJANGO_SUPERUSER_PASSWORD="${DJANGO_SUPERUSER_PASSWORD:-}"
-
-while [ -z "$DJANGO_SUPERUSER_PASSWORD" ]; do
-  read -r -p "Django Superuser Password (required): " DJANGO_SUPERUSER_PASSWORD
-done
-
-echo ""
-echo "Configuration complete."
-echo ""
-
-# ---------------------------------------------------------------------------
-# D. Generate .env file
-# ---------------------------------------------------------------------------
-echo "Generating .env file..."
-
-cat > .env <<ENVEOF
-# =============================================================================
-# NodeAlert IoT — Environment Configuration
-# Auto-generated by setup.sh — do not edit manually
-# =============================================================================
-
-# MQTT Broker
-MQTT_BROKER_USER=${MQTT_BROKER_USER}
-MQTT_BROKER_PASSWORD=${MQTT_BROKER_PASSWORD}
-
-# MQTT Broker — Firmware connection
-MQTT_BROKER_IP=${MQTT_BROKER_IP}
-
-# MQTT Subscriber (for Django management command)
-MQTT_SUBSCRIBER_USER=${MQTT_SUBSCRIBER_USER}
-MQTT_SUBSCRIBER_PASSWORD=${MQTT_SUBSCRIBER_PASSWORD}
-
-# Firmware MQTT (for ESP32 node credentials, generated in user_config.h)
-FIRMWARE_MQTT_USER=${FIRMWARE_MQTT_USER}
-FIRMWARE_MQTT_PASSWORD=${FIRMWARE_MQTT_PASSWORD}
-FIRMWARE_DEVICE_ID=${FIRMWARE_DEVICE_ID}
-
-# MySQL Database
-MYSQL_ROOT_PASSWORD=${MYSQL_ROOT_PASSWORD}
-MYSQL_DATABASE=${MYSQL_DATABASE}
-MYSQL_USER=${MYSQL_USER}
-MYSQL_PASSWORD=${MYSQL_PASSWORD}
-
-# Django
-DJANGO_SECRET_KEY=${DJANGO_SECRET_KEY}
-DJANGO_DEBUG=${DJANGO_DEBUG}
-DJANGO_SUPERUSER_USERNAME=${DJANGO_SUPERUSER_USERNAME}
-DJANGO_SUPERUSER_EMAIL=${DJANGO_SUPERUSER_EMAIL}
-DJANGO_SUPERUSER_PASSWORD=${DJANGO_SUPERUSER_PASSWORD}
-ENVEOF
-
-chmod 600 .env
-echo "  .env created (permissions: 600)"
+echo "Usando credenciales hardcodeadas (ver docs/contraseñas.md)"
 echo ""
 
 # ---------------------------------------------------------------------------
@@ -232,7 +91,6 @@ if command -v mosquitto_passwd &>/dev/null; then
   MOSQUITTO_PASSWD_FILE="${MOSQUITTO_PASSWD_DIR}/mosquitto_passwd"
 
   mkdir -p "$MOSQUITTO_PASSWD_DIR"
-  # Remove existing file if present (mosquitto_passwd -b appends)
   rm -f "$MOSQUITTO_PASSWD_FILE"
 
   if mosquitto_passwd -b "$MOSQUITTO_PASSWD_FILE" "$MQTT_BROKER_USER" "$MQTT_BROKER_PASSWORD"; then
@@ -435,7 +293,6 @@ INCLUDE_FLAG="-include src/config/user_config.h"
 if grep -qF "$INCLUDE_FLAG" "$PLATFORMIO_INI" 2>/dev/null; then
   echo "  -include flag already present in platformio.ini (skipping)"
 else
-  # Append after the last -I line in the build_flags section
   sed -i '/^    -I include$/a\    -include src/config/user_config.h' "$PLATFORMIO_INI"
   echo "  Added -include flag to platformio.ini"
 fi
@@ -470,7 +327,6 @@ echo "  Config file:   ${FIRMWARE_CONFIG_FILE}"
 echo "  Re-run setup.sh to regenerate."
 echo ""
 echo "============================================="
-echo " ⚠️  WARNING: .env contains sensitive credentials."
-echo "    Keep this file secure and never commit it"
-echo "    to version control (.env is in .gitignore)."
+echo " Las credenciales están hardcodeadas en el código."
+echo " Editá docs/contraseñas.md para modificarlas."
 echo "============================================="

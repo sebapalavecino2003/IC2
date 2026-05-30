@@ -1,38 +1,33 @@
 #!/bin/bash
 set -e
 
-# Run database migrations
+# Punto de entrada del contenedor Django.
+# Orquesta la secuencia de inicialización: migraciones, archivos
+# estáticos, creación del superusuario por defecto, inicio del
+# subscriber MQTT y finalmente el servidor Django.
+
+# Aplica migraciones pendientes de base de datos.
 python manage.py migrate --noinput
 
-# Collect static files for nginx serving
+# Recolecta archivos estáticos para servirlos via nginx.
 python manage.py collectstatic --noinput
 
-# Create superuser if DJANGO_SUPERUSER_USERNAME and DJANGO_SUPERUSER_PASSWORD are set
-if [ -n "${DJANGO_SUPERUSER_USERNAME:-}" ] && [ -n "${DJANGO_SUPERUSER_PASSWORD:-}" ]; then
-  python manage.py createsuperuser \
-    --username "$DJANGO_SUPERUSER_USERNAME" \
-    --email "${DJANGO_SUPERUSER_EMAIL:-admin@nodealert.local}" \
-    --noinput 2>/dev/null || true
-fi
+# Crea el superusuario admin si no existe.
+# El redirect a stderr y el '|| true' ocultan errores cuando el
+# usuario ya fue creado en ejecuciones previas.
+python manage.py createsuperuser \
+  --username admin \
+  --email admin@nodealert.local \
+  --noinput 2>/dev/null || true
 
-# Start MQTT subscriber in background (D-14)
-if [ -n "${MQTT_SUBSCRIBER_USER:-}" ] && [ -n "${MQTT_SUBSCRIBER_PASSWORD:-}" ]; then
-  echo "Starting MQTT subscriber..."
-  python manage.py mqtt_subscriber &
-  MQTT_PID=$!
-  echo "MQTT subscriber started (PID: ${MQTT_PID})"
-else
-  echo "MQTT subscriber credentials not set — skipping MQTT subscription"
-fi
+# Inicia el subscriber MQTT en background.
+# Es un proceso independiente que corre mientras el contenedor vive.
+echo "Starting MQTT subscriber..."
+python manage.py mqtt_subscriber &
+MQTT_PID=$!
+echo "MQTT subscriber started (PID: ${MQTT_PID})"
 
-# Production toggle: Gunicorn vs runserver (Phase 6, D-05/D-08)
-if [ "${GUNICORN_ENABLED:-false}" = "true" ]; then
-  WORKERS="${GUNICORN_WORKERS:-3}"
-  echo "Starting Gunicorn with ${WORKERS} workers..."
-  exec gunicorn nodealert.wsgi:application \
-    --workers "$WORKERS" \
-    --bind 0.0.0.0:8000
-else
-  echo "Starting Django development server..."
-  python manage.py runserver 0.0.0.0:8000
-fi
+# Inicia el servidor de desarrollo Django.
+# En producción, esto sería reemplazado por Gunicorn.
+echo "Starting Django development server..."
+python manage.py runserver 0.0.0.0:8000

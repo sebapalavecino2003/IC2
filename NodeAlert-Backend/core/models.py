@@ -1,8 +1,18 @@
-"""Core models for NodeAlert IoT: Device, Reading, Event, User."""
+"""
+Modelos principales del dominio NodeAlert IoT.
+
+Define las entidades fundamentales del sistema de monitoreo ambiental:
+dispositivos (ESP32), lecturas de sensores, eventos/alertas, usuarios
+y perfiles con roles. Cada modelo refleja una necesidad de negocio
+identificada en la arquitectura del sistema.
+"""
 from django.db import models
 from django.contrib.auth.models import AbstractUser
 
-# Sensor type choices for the Reading model
+# Opciones de tipo de sensor que puede reportar un nodo ESP32.
+# Cada valor corresponde al campo 'sensor_type' en el modelo Reading
+# y es utilizado por el subscriber MQTT para mapear claves del JSON
+# entrante al tipo correcto en base de datos.
 SENSOR_TYPE_CHOICES = [
     ('temperature', 'Temperature'),
     ('humidity', 'Humidity'),
@@ -10,7 +20,9 @@ SENSOR_TYPE_CHOICES = [
     ('flame', 'Flame'),
 ]
 
-# Severity choices for the Event model
+# Niveles de severidad para eventos y alertas del sistema.
+# Se usan para priorizar la atención: critical requiere acción inmediata,
+# warning indica condición anómala no crítica, info es informativo.
 SEVERITY_CHOICES = [
     ('info', 'Info'),
     ('warning', 'Warning'),
@@ -19,8 +31,15 @@ SEVERITY_CHOICES = [
 
 
 class Device(models.Model):
-    """An ESP32 sensor node device."""
+    """
+    Representa un nodo sensor ESP32 desplegado en campo.
 
+    Cada dispositivo tiene un identificador único (device_id) que se
+    utiliza como clave en los topics MQTT para enrutar comandos y
+    telemetría. El campo is_active permite desactivar un nodo sin
+    eliminar su historial, útil cuando un dispositivo se da de baja
+    o se reemplaza.
+    """
     device_id = models.CharField(max_length=50, unique=True)
     name = models.CharField(max_length=100)
     mac_address = models.CharField(max_length=17, blank=True, default='')
@@ -38,7 +57,14 @@ class Device(models.Model):
 
 
 class Reading(models.Model):
-    """A sensor reading from a device."""
+    """
+    Lectura individual de un sensor perteneciente a un dispositivo.
+    Cada instancia representa una muestra puntual en el tiempo de una
+    magnitud física (temperatura, humedad, gas, llama). El índice
+    compuesto (device, sensor_type) optimiza las consultas de historial
+    por dispositivo y tipo de sensor, que son las más frecuentes en
+    el dashboard y las APIs de monitoreo.
+    """
 
     device = models.ForeignKey(
         Device, on_delete=models.CASCADE, related_name='readings'
@@ -61,7 +87,15 @@ class Reading(models.Model):
 
 
 class Event(models.Model):
-    """An event or alert from a device."""
+    """
+    Evento o alerta generada por un dispositivo.
+
+    Los eventos representan condiciones que requieren atención: superación
+    de umbrales, detección de llama, cambios de configuración, etc.
+    El campo resolved permite al operador marcar eventos como atendidos
+    sin eliminar el registro histórico. El índice sobre (device, severity)
+    acelera las consultas de alertas activas filtradas por gravedad.
+    """
 
     device = models.ForeignKey(
         Device, on_delete=models.CASCADE, related_name='events'
@@ -85,10 +119,54 @@ class Event(models.Model):
 
 
 class User(AbstractUser):
-    """Custom user model extending AbstractUser with no extra fields."""
+    """
+    Modelo de usuario personalizado que extiende AbstractUser.
+
+    Se utiliza AUTH_USER_MODEL en settings.py para que Django use
+    este modelo en lugar del default. Actualmente no agrega campos
+    extra; los roles se delegan al modelo UserProfile para mantener
+    separada la lógica de autorización de la autenticación base.
+    """
 
     class Meta:
         verbose_name_plural = 'users'
 
     def __str__(self):
         return self.username
+
+
+class Role(models.TextChoices):
+    """
+    Roles del sistema para control de acceso basado en permisos (RBAC).
+
+    ADMIN: Acceso completo (CRUD + comandos remotos).
+    OPERATOR: Lectura, actualización de eventos y envío de comandos.
+    VIEWER: Solo lectura de dashboards y reportes.
+    """
+    ADMIN = 'admin', 'Administrador'
+    OPERATOR = 'operator', 'Operador'
+    VIEWER = 'viewer', 'Visualizador'
+
+
+class UserProfile(models.Model):
+    """
+    Perfil extendido del usuario con asignación de rol.
+
+    Se crea automáticamente mediante una señal post_save al registrar
+    un nuevo usuario. La relación OneToOne garantiza que cada usuario
+    tenga exactamente un perfil. El rol por defecto es VIEWER para
+    evitar que usuarios nuevos tengan permisos no intencionados.
+    """
+
+    user = models.OneToOneField(
+        User, on_delete=models.CASCADE, related_name='profile'
+    )
+    role = models.CharField(
+        max_length=20, choices=Role.choices, default=Role.VIEWER
+    )
+
+    class Meta:
+        verbose_name_plural = 'user profiles'
+
+    def __str__(self):
+        return f"{self.user.username} ({self.get_role_display()})"

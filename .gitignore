@@ -1,6 +1,3 @@
-# Environment variables (contains credentials)
-.env
-
 # Mosquitto generated password files — NOT ignored for mosquitto/config/
 # (empty placeholder is tracked so clone works; setup.sh overwrites it)
 # Ignore any stray copies outside of mosquitto/config/
@@ -23,3 +20,10 @@ NodeAlert-Firmware/
 
 # Local development override — not for production (Raspberry Pi)
 docker-compose.override.yml
+
+# Django collectstatic artifacts (regenerated on deploy)
+NodeAlert-Backend/static/admin/
+NodeAlert-Backend/static/rest_framework/
+
+# Python virtual environment
+NodeAlert-Backend/.venv/

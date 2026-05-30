@@ -1,5 +1,12 @@
-"""DRF viewsets for core models: Device, Reading, Event."""
-from rest_framework import status, viewsets, filters, permissions
+"""
+Vistas y ViewSets de la API REST NodeAlert.
+
+Implementa los endpoints REST para dispositivos, lecturas, eventos,
+autenticación y health checks. La arquitectura utiliza ViewSets de
+DRF para operaciones CRUD estándar y APIView para endpoints específicos
+como login y health checks.
+"""
+from rest_framework import status, viewsets, filters
 from rest_framework.decorators import action
 from rest_framework.permissions import AllowAny
 from rest_framework.response import Response
@@ -8,15 +15,23 @@ from rest_framework.authtoken.models import Token
 from rest_framework.throttling import AnonRateThrottle
 from django.db import connection
 import django_filters
-import os
+import subprocess
 from .models import Device, Reading, Event
 from .mqtt_publisher import publish_command
+from .permissions import RolePermission
 from .serializers import (DeviceSerializer, ReadingSerializer, EventSerializer,
                           LoginSerializer, CommandSerializer, UserSerializer)
 
 
 class ReadingFilter(django_filters.FilterSet):
-    """Custom FilterSet for Reading model with timestamp range and device_id lookup."""
+    """
+    Filtro personalizado para el modelo Reading.
+
+    Expone filtros por tipo de sensor exacto, device_id (resuelve la
+    relación hacia Device), y rango de timestamps (gte/lte). Esto
+    permite al frontend consultar lecturas de un dispositivo específico
+    en una ventana de tiempo determinada sin filtrar en cliente.
+    """
 
     sensor_type = django_filters.CharFilter(lookup_expr='exact')
     device_id = django_filters.CharFilter(
@@ -35,10 +50,20 @@ class ReadingFilter(django_filters.FilterSet):
 
 
 class DeviceViewSet(viewsets.ModelViewSet):
-    """Full CRUD. Filters: is_active, location. Search: name, device_id, location. Ordering."""
+    """
+    ViewSet completo para dispositivos (CRUD + comando remoto).
+
+    Proporciona operaciones CRUD estándar sobre dispositivos, más un
+    endpoint adicional 'command' que permite publicar comandos MQTT
+    hacia un dispositivo específico. El acceso está controlado por
+    RolePermission, que restringe según el rol del usuario.
+
+    Acción adicional:
+      POST /devices/{id}/command/ -- Publica un comando MQTT al dispositivo.
+    """
     queryset = Device.objects.all()
     serializer_class = DeviceSerializer
-    permission_classes = [permissions.DjangoModelPermissions]
+    permission_classes = [RolePermission]
     filter_backends = [django_filters.rest_framework.DjangoFilterBackend,
                        filters.SearchFilter, filters.OrderingFilter]
     filterset_fields = ['is_active', 'location']
@@ -47,11 +72,16 @@ class DeviceViewSet(viewsets.ModelViewSet):
 
     @action(detail=True, methods=['post'])
     def command(self, request, pk=None):
-        """Publish an MQTT command to a device (AUTO-04).
+        """
+        Publica un comando MQTT hacia un dispositivo específico.
 
-        POST body: {"command": "buzzer_on", "params": {...}}
-        Valid commands: buzzer_on, buzzer_off, return_to_auto,
-                       acknowledge_alarm, update_thresholds
+        El cuerpo de la solicitud debe contener el campo 'command' con
+        uno de los valores válidos (buzzer_on, buzzer_off, etc.) y un
+        campo opcional 'params' con parámetros adicionales.
+
+        Responde con 502 si la publicación MQTT falla (el broker no
+        está disponible o hay un error de conexión), permitiendo al
+        frontend mostrar un mensaje de error apropiado.
         """
         device = self.get_object()
 
@@ -76,10 +106,16 @@ class DeviceViewSet(viewsets.ModelViewSet):
 
 
 class ReadingViewSet(viewsets.ReadOnlyModelViewSet):
-    """Read-only viewset for Reading model.
+    """
+    ViewSet de solo lectura para lecturas de sensores.
 
-    Supports filtering by sensor_type, device_id, timestamp__gte, timestamp__lte.
-    Supports ordering by timestamp.
+    Solamente permite listar y recuperar lecturas individuales. La
+    creación de lecturas ocurre exclusivamente a través del subscriber
+    MQTT (management command mqtt_subscriber), garantizando que no
+    se puedan insertar registros inconsistentes vía API.
+
+    Soporta filtrado por tipo de sensor, device_id y rango de timestamps,
+    más ordenamiento por timestamp descendente (default).
     """
 
     queryset = Reading.objects.all()
@@ -91,10 +127,19 @@ class ReadingViewSet(viewsets.ReadOnlyModelViewSet):
 
 
 class EventViewSet(viewsets.ModelViewSet):
-    """Full CRUD. Filters: severity, resolved."""
+    """
+    ViewSet completo para eventos y alertas.
+
+    Permite CRUD completo. Los eventos se crean automáticamente desde
+    el subscriber MQTT cuando un dispositivo reporta una condición,
+    pero los operadores pueden actualizar el campo 'resolved' vía API
+    para marcar eventos como atendidos.
+
+    Filtros disponibles: severity, resolved.
+    """
     queryset = Event.objects.all()
     serializer_class = EventSerializer
-    permission_classes = [permissions.DjangoModelPermissions]
+    permission_classes = [RolePermission]
     filter_backends = [django_filters.rest_framework.DjangoFilterBackend,
                        filters.OrderingFilter]
     filterset_fields = ['severity', 'resolved']
@@ -102,18 +147,24 @@ class EventViewSet(viewsets.ModelViewSet):
 
 
 class LoginView(APIView):
-    """View for user authentication via username/password.
+    """
+    Endpoint de autenticación de usuarios.
 
-    Accepts POST requests with username and password, validates credentials,
-    and returns a DRF Token. Publicly accessible (AllowAny).
-    Rate limited: 5 requests/min per IP (D-14).
+    Acepta credenciales username/password y devuelve un token de
+    autenticación DRF. Es el único endpoint público (AllowAny) con
+    rate limiting estricto (5 solicitudes/minuto) para mitigar ataques
+    de fuerza bruta.
+
+    El token generado debe incluirse en el header Authorization de
+    todas las solicitudes posteriores como 'Token <valor>'.
     """
 
+    authentication_classes = []
     permission_classes = [AllowAny]
     throttle_classes = [AnonRateThrottle]
 
     def post(self, request):
-        """Validate credentials and return auth token."""
+        """Valida credenciales, autentica al usuario y retorna un token."""
         serializer = LoginSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         user = serializer.validated_data['user']
@@ -122,7 +173,13 @@ class LoginView(APIView):
 
 
 class MeView(APIView):
-    """GET /api/v1/auth/me/ — Returns current user info with role."""
+    """
+    Endpoint que retorna la información del usuario autenticado.
+
+    Incluye el nombre de usuario, rol asignado y si es staff.
+    El frontend utiliza esta información para mostrar la interfaz
+    adecuada según los permisos del usuario.
+    """
 
     def get(self, request):
         serializer = UserSerializer(request.user)
@@ -130,7 +187,14 @@ class MeView(APIView):
 
 
 class LivenessHealthView(APIView):
-    """GET /api/v1/health/ — Liveness check. No dependencies. Public."""
+    """
+    Health check de liveness: verifica que el proceso Django responda.
+
+    No verifica dependencias externas (base de datos, MQTT). Es el
+    probe que Kubernetes/Docker Compose usa para saber si el contenedor
+    debe reiniciarse. Público para que los healthchecks funcionen sin
+    autenticación.
+    """
     permission_classes = [AllowAny]
 
     def get(self, request):
@@ -138,27 +202,39 @@ class LivenessHealthView(APIView):
 
 
 class ReadinessHealthView(APIView):
-    """GET /api/v1/health/ready/ — Readiness check. Verifies MySQL + MQTT.
+    """
+    Health check de readiness: verifica dependencias del backend.
 
-    Returns 200 if all dependencies healthy, 503 if any fail.
-    Public endpoint — no sensitive data in response.
+    Comprueba que la base de datos MySQL responda (mediante
+    connection.ensure_connection) y que el proceso MQTT subscriber
+    esté activo (mediante pgrep). Es el probe que determina si el
+    contenedor puede recibir tráfico.
+
+    Responde 503 si alguna dependencia falla, lo que permite a
+    orquestadores evitar enrutar tráfico a una instancia no lista.
     """
     permission_classes = [AllowAny]
 
     def get(self, request):
         checks = {"database": False, "mqtt": False}
 
+        # Verificación de conexión a base de datos.
+        # ensure_connection lanza excepción si no puede conectar.
         try:
             connection.ensure_connection()
             checks["database"] = True
         except Exception:
             pass
 
+        # Verificación del proceso MQTT subscriber mediante pgrep.
+        # Busca el proceso por nombre (mqtt_subscriber) sin importar
+        # sus argumentos completos.
         try:
-            mqtt_alive = os.system(
-                'pgrep -f "mqtt_subscriber" > /dev/null 2>&1'
+            result = subprocess.run(
+                ['pgrep', '-f', 'mqtt_subscriber'],
+                capture_output=True, text=True,
             )
-            checks["mqtt"] = (mqtt_alive == 0)
+            checks["mqtt"] = (result.returncode == 0)
         except Exception:
             pass
 

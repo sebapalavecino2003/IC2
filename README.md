@@ -6,39 +6,29 @@ Sistema distribuido de monitoreo ambiental crítico para detección temprana de 
 
 | Componente | Tecnología |
 |------------|------------|
-| Firmware (ESP32) | C++17, FreeRTOS, PlatformIO, ESP-IDF 6.0.1 |
-| Backend | Django 5, DRF, MySQL 8, Gunicorn, nginx |
-| Frontend | React 18, TypeScript, Vite, Material UI |
+| Firmware (ESP32) | C++, PlatformIO, Arduino framework |
+| Backend | Django 5, DRF, MySQL 8, Gunicorn |
+| Frontend | React 18, JavaScript, Vite, Material UI |
 | Broker MQTT | Mosquitto 2 |
-| Infraestructura | Docker Compose (Raspberry Pi / Linux) |
+| Infraestructura | Docker Compose |
 
 ## Inicio Rápido
 
 ```bash
-# 1. Clonar el repositorio
-git clone <repo-url> && cd nodealert-iot
-
-# 2. Configurar variables de entorno (editar .env con tus credenciales)
+# 1. Configurar variables de entorno (editar .env con tus credenciales)
 cp .env.example .env
-
-# 3. Ejecutar script de despliegue
+# O generar automáticamente:
 ./setup.sh
 
-# 4. Compilar firmware
-cd NodeAlert-Firmware && pio run && cd ..
+# 2. Iniciar servidores
+docker compose up -d --build
 
-# 5. Iniciar servidores
-docker compose up -d
+# 3. Abrir frontend
+http://localhost:3000
 ```
-
-## Documentación
-
-- [Guía de Despliegue](docs/DEPLOY.md)
-- [Arquitectura del Sistema](docs/ARCHITECTURE.md)
-- [Referencia de API](docs/API.md)
 
 ## Componentes
 
-- [Firmware ESP32](NodeAlert-Firmware/README.md)
 - [Backend Django](NodeAlert-Backend/README.md)
 - [Frontend React](NodeAlert-Frontend/README.md)
+- Firmware ESP32 — `Molotica/`

@@ -1,4 +1,10 @@
-"""WSGI config for nodealert project."""
+"""
+Configuración WSGI para el proyecto NodeAlert.
+
+Expone la aplicación WSGI para servidores como Gunicorn. Django
+configura automáticamente el módulo de settings basándose en la
+variable de entorno DJANGO_SETTINGS_MODULE.
+"""
 import os
 
 from django.core.wsgi import get_wsgi_application

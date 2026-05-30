@@ -1,5 +1,9 @@
-version: "3.8"
-
+# Docker Compose para el stack NodeAlert IoT.
+# Define cuatro servicios: Mosquitto (MQTT broker), MySQL (base de datos),
+# Django (backend API REST) y Frontend (React SPA servido por nginx).
+#
+# Todos los servicios comparten la red nodealert-net para comunicación
+# interna por nombre de contenedor.
 networks:
   nodealert-net:
     driver: bridge
@@ -10,6 +14,9 @@ volumes:
   mysql_data:
 
 services:
+  # ---------------------- MOSQUITTO MQTT BROKER ----------------------
+  # Broker MQTT que enruta mensajes entre los dispositivos ESP32 y el
+  # backend Django. Configuración montada como solo-lectura.
   mosquitto:
     image: eclipse-mosquitto:2
     container_name: mosquitto
@@ -23,32 +30,43 @@ services:
       - nodealert-net
     restart: unless-stopped
     healthcheck:
-      test: ["CMD", "mosquitto_sub", "-t", "\$SYS/#", "-C", "1"]
+      test: ["CMD", "mosquitto_sub", "-t", "$$SYS/#", "-C", "1", "-u", "nodealert_gateway", "-P", "test_password"]
       interval: 30s
       timeout: 10s
       retries: 3
       start_period: 10s
 
+  # ---------------------- MYSQL DATABASE ----------------------
+  # Base de datos relacional del backend Django.
   mysql:
     image: mysql:8.0
     container_name: mysql
-    env_file: .env
+    environment:
+      MYSQL_ROOT_PASSWORD: root_password
+      MYSQL_DATABASE: nodealert
+      MYSQL_USER: nodealert
+      MYSQL_PASSWORD: db_password
     volumes:
       - mysql_data:/var/lib/mysql
     networks:
       - nodealert-net
     restart: unless-stopped
     healthcheck:
-      test: ["CMD", "mysqladmin", "ping", "-u", "root", "-p${MYSQL_ROOT_PASSWORD}", "--silent"]
+      test: ["CMD", "mysqladmin", "ping", "-u", "root", "-proot_password", "--silent"]
       interval: 10s
       timeout: 5s
       retries: 5
       start_period: 30s
 
+  # ---------------------- DJANGO BACKEND ----------------------
+  # API REST construida con Django REST Framework.
+  # Depende de MySQL (espera healthcheck) e inicia el subscriber MQTT
+  # automáticamente en su entrypoint.
   django:
     build: ./NodeAlert-Backend
     container_name: django
-    env_file: .env
+    ports:
+      - "8000:8000"
     depends_on:
       mysql:
         condition: service_healthy
@@ -62,6 +80,9 @@ services:
       retries: 5
       start_period: 40s
 
+  # ---------------------- FRONTEND (REACT + NGINX) ----------------------
+  # Aplicación SPA React servida por nginx. El proxy inverso redirige
+  # /api/ al contenedor Django para evitar CORS en producción.
   frontend:
     build: ./NodeAlert-Frontend
     container_name: frontend

@@ -1,3 +1,6 @@
+# Dockerfile multi-etapa para el frontend NodeAlert.
+# Etapa 1 (build): Compila la aplicación React con Vite.
+# Etapa 2 (runtime): Sirve los archivos estáticos con nginx.
 FROM node:20-alpine AS build
 WORKDIR /app
 COPY package.json package-lock.json ./

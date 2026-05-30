@@ -1,25 +1,26 @@
 """
-Django settings for nodealert project.
+Configuración principal del proyecto Django NodeAlert.
+
+Define todos los aspectos de configuración del backend: aplicaciones
+instaladas, middleware, base de datos, autenticación, REST framework
+y CORS. La configuración está orientada a ejecución en contenedores
+Docker con valores hardcodeados para el entorno de desarrollo/
+demostración.
 """
-import os
 import sys
 from pathlib import Path
-from dotenv import load_dotenv
 
-load_dotenv()
-
-# Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
-# SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = os.environ['DJANGO_SECRET_KEY']
+SECRET_KEY = 'contraseña'
 
-# SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = os.environ.get('DJANGO_DEBUG', 'False') == 'True'
+DEBUG = True
 
 ALLOWED_HOSTS = ['*']
 
-# Application definition
+# Aplicaciones instaladas.
+# El orden es importante: django.contrib.admin debe ir después de
+# django.contrib.auth y django.contrib.contenttypes.
 INSTALLED_APPS = [
     'corsheaders',
     'django.contrib.admin',
@@ -34,6 +35,9 @@ INSTALLED_APPS = [
     'core',
 ]
 
+# Middleware.
+# CorsMiddleware debe estar lo más arriba posible para que las
+# respuestas a OPTIONS preflight incluyan los headers CORS.
 MIDDLEWARE = [
     'corsheaders.middleware.CorsMiddleware',
     'django.middleware.security.SecurityMiddleware',
@@ -65,13 +69,16 @@ TEMPLATES = [
 
 WSGI_APPLICATION = 'nodealert.wsgi.application'
 
-# Database
+# Base de datos MySQL.
+# Configurada para conectarse al contenedor 'mysql' en la red Docker
+# interna. El modo SQL STRICT_TRANS_TABLES evita truncamientos de datos
+# silenciosos que MySQL permite por defecto.
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.mysql',
-        'NAME': os.environ.get('MYSQL_DATABASE', 'nodealert'),
-        'USER': os.environ.get('MYSQL_USER', 'nodealert'),
-        'PASSWORD': os.environ.get('MYSQL_PASSWORD', 'nodealert'),
+        'NAME': 'nodealert',
+        'USER': 'nodealert',
+        'PASSWORD': 'nodealert',
         'HOST': 'mysql',
         'PORT': '3306',
         'OPTIONS': {
@@ -80,19 +87,15 @@ DATABASES = {
     }
 }
 
-# Allow MYSQL_HOST and MYSQL_PORT overrides from environment
-if os.environ.get('MYSQL_HOST'):
-    DATABASES['default']['HOST'] = os.environ['MYSQL_HOST']
-if os.environ.get('MYSQL_PORT'):
-    DATABASES['default']['PORT'] = os.environ['MYSQL_PORT']
-
-# Test database uses root credentials (test runner needs CREATE DATABASE)
+# En tests, usar root para evitar problemas de permisos con las
+# migraciones de test que Django ejecuta.
 if 'test' in sys.argv:
-    DATABASES['default']['USER'] = os.environ.get('MYSQL_ROOT_USER', 'root')
-    DATABASES['default']['PASSWORD'] = os.environ.get('MYSQL_ROOT_PASSWORD', '')
+    DATABASES['default']['USER'] = 'root'
+    DATABASES['default']['PASSWORD'] = 'root_password'
 
 
-# Password validation
+# Validadores de contraseña de Django.
+# Se aplican al crear o modificar usuarios a través del admin.
 AUTH_PASSWORD_VALIDATORS = [
     {'NAME': 'django.contrib.auth.password_validation.UserAttributeSimilarityValidator'},
     {'NAME': 'django.contrib.auth.password_validation.MinimumLengthValidator'},
@@ -100,23 +103,28 @@ AUTH_PASSWORD_VALIDATORS = [
     {'NAME': 'django.contrib.auth.password_validation.NumericPasswordValidator'},
 ]
 
-# Internationalization
+# Internacionalización.
 LANGUAGE_CODE = 'en-us'
 TIME_ZONE = 'UTC'
 USE_I18N = True
 USE_TZ = True
 
-# Static files (CSS, JavaScript, Images)
+# Archivos estáticos (CSS, JavaScript, imágenes).
 STATIC_URL = 'static/'
 STATIC_ROOT = BASE_DIR / 'static'
 
-# Default primary key field type
+# Tipo de clave primaria por defecto para todos los modelos.
+# BigAutoField = entero de 64 bits, soporta >2^31 registros.
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
-# Custom user model
+# Modelo de usuario personalizado.
+# Reemplaza el AbstractUser de Django con nuestra versión en core.models.
 AUTH_USER_MODEL = 'core.User'
 
-# Django REST Framework configuration
+# Configuración de Django REST Framework.
+# Autenticación por token (API) y sesión (navegador DRF).
+# Paginación por defecto de 50 elementos.
+# Rate limiting: 100 req/min para usuarios autenticados, 5 req/min para anónimos.
 REST_FRAMEWORK = {
     'DEFAULT_AUTHENTICATION_CLASSES': [
         'rest_framework.authentication.TokenAuthentication',
@@ -137,7 +145,9 @@ REST_FRAMEWORK = {
     },
 }
 
-# CORS configuration for frontend Docker container + nginx proxy
+# Configuración CORS para permitir solicitudes desde el frontend.
+# Incluye orígenes de desarrollo (Vite en puerto 5173) y producción
+# (nginx en puerto 80/3000).
 CORS_ALLOWED_ORIGINS = [
     "http://localhost:3000",
     "http://127.0.0.1:3000",
@@ -147,9 +157,5 @@ CORS_ALLOWED_ORIGINS = [
     "http://127.0.0.1:80",
     "http://localhost",
 ]
-
-# Allow extra origins via env var (comma-separated) — useful for LAN access via Pi IP
-if os.environ.get('CORS_EXTRA_ORIGINS'):
-    CORS_ALLOWED_ORIGINS.extend(os.environ['CORS_EXTRA_ORIGINS'].split(','))
 
 CORS_ALLOW_CREDENTIALS = True

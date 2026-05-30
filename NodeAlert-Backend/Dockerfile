@@ -1,6 +1,11 @@
+# Dockerfile para el backend Django NodeAlert.
+# Utiliza python:3.12-slim para imagen reducida e instala dependencias
+# del sistema necesarias para mysqlclient.
 FROM python:3.12-slim
 
-# Install system dependencies for mysqlclient
+# Instala dependencias del sistema para compilar mysqlclient.
+# gcc, default-libmysqlclient-dev y pkg-config son necesarios para
+# compilar el wheel de mysqlclient durante pip install.
 RUN apt-get update && apt-get install -y --no-install-recommends \
     gcc \
     default-libmysqlclient-dev \
@@ -10,14 +15,12 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 
 WORKDIR /app
 
-# Install Python dependencies
+# Instala dependencias Python desde requirements.txt.
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
-# Copy project files
+# Copia el código fuente y el entrypoint.
 COPY . .
-
-# Make entrypoint executable
 COPY entrypoint.sh .
 RUN chmod +x entrypoint.sh
 
