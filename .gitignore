@@ -26,4 +26,9 @@ NodeAlert-Backend/static/admin/
 NodeAlert-Backend/static/rest_framework/
 
 # Python virtual environment
+.venv/
 NodeAlert-Backend/.venv/
+
+# Frontend dependencies and build (rebuilt via Docker on deploy)
+NodeAlert-Frontend/node_modules/
+NodeAlert-Frontend/dist/
