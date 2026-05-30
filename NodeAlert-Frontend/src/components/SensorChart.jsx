@@ -13,8 +13,6 @@ import {
 import {
   AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid,
 } from 'recharts'
-import { format } from 'date-fns'
-
 const RANGES = [
   { label: '1H', value: 1 },
   { label: '6H', value: 6 },

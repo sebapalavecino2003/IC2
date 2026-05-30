@@ -72,8 +72,8 @@ export default function ActiveAlerts({ deviceId }) {
     fetchAlerts()
   }
 
-  const handleSilence = async (id, deviceId) => {
-    await sendCommand(deviceId, 'acknowledge_alarm')
+  const handleSilence = async (id, devId) => {
+    await sendCommand(devId, 'acknowledge_alarm')
     fetchAlerts()
   }
 
@@ -118,13 +118,15 @@ export default function ActiveAlerts({ deviceId }) {
               key={alert.id}
               secondaryAction={
                 <Box sx={{ display: 'flex', gap: 0.5 }}>
-                  <IconButton
-                    size="small"
-                    onClick={() => handleSilence(alert.id, alert.device_id)}
-                    title="Silenciar alarma"
-                  >
-                    <VolumeOffIcon fontSize="small" />
-                  </IconButton>
+                  {deviceId && (
+                    <IconButton
+                      size="small"
+                      onClick={() => handleSilence(alert.id, deviceId)}
+                      title="Silenciar alarma"
+                    >
+                      <VolumeOffIcon fontSize="small" />
+                    </IconButton>
+                  )}
                   <IconButton
                     size="small"
                     onClick={() => handleResolve(alert.id)}

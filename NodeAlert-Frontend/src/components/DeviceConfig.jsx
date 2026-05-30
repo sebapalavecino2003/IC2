@@ -11,7 +11,7 @@
  */
 import { useState } from 'react'
 import {
-  Card, CardContent, Typography, Slider, TextField, Button,
+  Card, CardContent, Typography, Slider, Button,
   Box, Snackbar, Alert,
 } from '@mui/material'
 import { sendCommand } from '../services/api'
@@ -20,7 +20,6 @@ export default function DeviceConfig({ deviceId }) {
   const [tempMax, setTempMax] = useState(50)
   const [gasMax, setGasMax] = useState(2000)
   const [flameMax, setFlameMax] = useState(2000)
-  const [interval, setInterval] = useState(60)
   const [loading, setLoading] = useState(false)
   const [snackbar, setSnackbar] = useState({ open: false, message: '', severity: 'success' })
 
@@ -35,18 +34,6 @@ export default function DeviceConfig({ deviceId }) {
       setSnackbar({ open: true, message: 'Umbrales actualizados', severity: 'success' })
     } catch {
       setSnackbar({ open: true, message: 'Error al actualizar umbrales', severity: 'error' })
-    } finally {
-      setLoading(false)
-    }
-  }
-
-  const handleSaveInterval = async () => {
-    setLoading(true)
-    try {
-      await sendCommand(deviceId, 'update_thresholds', { interval_sec: interval })
-      setSnackbar({ open: true, message: 'Intervalo actualizado', severity: 'success' })
-    } catch {
-      setSnackbar({ open: true, message: 'Error al actualizar intervalo', severity: 'error' })
     } finally {
       setLoading(false)
     }
@@ -77,23 +64,6 @@ export default function DeviceConfig({ deviceId }) {
           </Box>
           <Button variant="contained" fullWidth onClick={handleSaveThresholds} disabled={loading}>
             Actualizar Umbrales
-          </Button>
-        </CardContent>
-      </Card>
-      <Card sx={{ mt: 2 }}>
-        <CardContent>
-          <Typography variant="h6" gutterBottom>Intervalo de Muestreo</Typography>
-          <TextField
-            size="small"
-            type="number"
-            label="Segundos"
-            value={interval}
-            onChange={(e) => setInterval(Number(e.target.value))}
-            sx={{ mb: 1 }}
-            fullWidth
-          />
-          <Button variant="contained" fullWidth onClick={handleSaveInterval} disabled={loading}>
-            Aplicar
           </Button>
         </CardContent>
       </Card>

@@ -13,6 +13,8 @@ que el mensaje llegue al broker, aceptando posibles duplicados que
 el firmware maneja siendo idempotente.
 """
 import json
+import os
+
 import paho.mqtt.publish as publish
 
 # Prefijo para todos los topics MQTT de NodeAlert.
@@ -44,8 +46,8 @@ def publish_command(device_id: str, cmd: str, params: dict = None) -> bool:
 
     host = 'mosquitto'
     port = 1883
-    user = 'mqtt_publisher'
-    password = 'test_password'
+    user = os.environ.get('MQTT_PUBLISHER_USER', 'mqtt_publisher')
+    password = os.environ.get('MQTT_PUBLISHER_PASSWORD', 'test_password')
 
     try:
         publish.single(

@@ -59,11 +59,12 @@ class DeviceViewSet(viewsets.ModelViewSet):
     RolePermission, que restringe según el rol del usuario.
 
     Acción adicional:
-      POST /devices/{id}/command/ -- Publica un comando MQTT al dispositivo.
+      POST /devices/{device_id}/command/ -- Publica un comando MQTT al dispositivo.
     """
     queryset = Device.objects.all()
     serializer_class = DeviceSerializer
     permission_classes = [RolePermission]
+    lookup_field = 'device_id'
     filter_backends = [django_filters.rest_framework.DjangoFilterBackend,
                        filters.SearchFilter, filters.OrderingFilter]
     filterset_fields = ['is_active', 'location']
@@ -126,6 +127,17 @@ class ReadingViewSet(viewsets.ReadOnlyModelViewSet):
     ordering_fields = ['timestamp']
 
 
+class EventFilter(django_filters.FilterSet):
+    severity = django_filters.CharFilter(lookup_expr='exact')
+    device_id = django_filters.CharFilter(
+        field_name='device__device_id', lookup_expr='exact'
+    )
+
+    class Meta:
+        model = Event
+        fields = ['severity', 'resolved', 'device_id']
+
+
 class EventViewSet(viewsets.ModelViewSet):
     """
     ViewSet completo para eventos y alertas.
@@ -135,14 +147,14 @@ class EventViewSet(viewsets.ModelViewSet):
     pero los operadores pueden actualizar el campo 'resolved' vía API
     para marcar eventos como atendidos.
 
-    Filtros disponibles: severity, resolved.
+    Filtros disponibles: severity, resolved, device_id.
     """
     queryset = Event.objects.all()
     serializer_class = EventSerializer
     permission_classes = [RolePermission]
+    filterset_class = EventFilter
     filter_backends = [django_filters.rest_framework.DjangoFilterBackend,
                        filters.OrderingFilter]
-    filterset_fields = ['severity', 'resolved']
     ordering_fields = ['timestamp', 'severity']
 
 

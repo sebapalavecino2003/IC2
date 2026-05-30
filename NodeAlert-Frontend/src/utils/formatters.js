@@ -61,15 +61,14 @@ export function sensorStatus(value, max) {
 
 /**
  * Determina si un dispositivo está online basado en su última conexión.
- * Se considera online si la última conexión fue hace menos de 35 segundos.
- * Este umbral permite tolerar hasta 2 ciclos de telemetría perdidos
- * (considerando el intervalo de 15 segundos del firmware) antes de
- * marcar el dispositivo como offline.
+ * Se considera online si la última conexión fue hace menos de 180 segundos.
+ * El firmware publica cada 60s; este umbral tolera hasta 2 ciclos perdidos
+ * con margen para reconexión WiFi antes de marcar offline.
  */
 export function deviceStatus(isoStr) {
   if (!isoStr) return 'offline'
   const diff = Date.now() - new Date(isoStr).getTime()
-  return diff < 35000 ? 'online' : 'offline'
+  return diff < 180000 ? 'online' : 'offline'
 }
 
 /**
@@ -95,4 +94,71 @@ export function statusColor(status) {
 export function formatValue(value, unit) {
   if (value == null) return '—'
   return `${Number(value).toFixed(1)} ${unit}`
+}
+
+const sensorKeyMap = {
+  temperature: 'temperature',
+  humidity: 'humidity',
+  gas: 'gas_ppm',
+  flame: 'flame',
+}
+
+/**
+ * Retorna la última lectura de un sensor específico para un dispositivo.
+ * El backend almacena cada tipo de sensor como una fila separada con
+ * { sensor_type, value, unit }. Esta función busca la fila más reciente
+ * del tipo solicitado y devuelve su valor.
+ */
+export function getSensorValue(readings, deviceId, sensorType) {
+  const match = readings
+    .filter((r) => r.device === deviceId && r.sensor_type === sensorType)
+    .sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp))
+  return match.length ? match[0].value : null
+}
+
+/**
+ * Agrupa las últimas lecturas de cada dispositivo en un objeto plano.
+ * Convierte el modelo del backend (filas por tipo de sensor) al formato
+ * que espera el frontend: { temperature, humidity, gas_ppm, flame }.
+ * Retorna un array de objetos { device_id, temperature, humidity, ... }.
+ */
+export function groupLatestReadings(readings) {
+  const devices = new Set(readings.map((r) => r.device))
+  return Array.from(devices).map((devId) => {
+    const latest = {}
+    for (const [dbType, frontKey] of Object.entries(sensorKeyMap)) {
+      const reading = readings
+        .filter((r) => r.device === devId && r.sensor_type === dbType)
+        .sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp))
+      if (reading.length) {
+        latest[frontKey] = reading[0].value
+      }
+    }
+    const deviceReadings = readings.filter((r) => r.device === devId)
+    if (deviceReadings.length) {
+      latest.timestamp = deviceReadings.sort(
+        (a, b) => new Date(b.timestamp) - new Date(a.timestamp)
+      )[0].timestamp
+    }
+    latest.device = devId
+    return latest
+  })
+}
+
+/**
+ * Filtra lecturas por tipo de sensor y las mapea a { timestamp, value }.
+ * Necesario para los gráficos Recharts que requieren una serie temporal
+ * plana con dataKey="value".
+ */
+export function readingsForChart(readings, dataKey) {
+  const reverseMap = {
+    temperature: 'temperature',
+    humidity: 'humidity',
+    gas_ppm: 'gas',
+    flame: 'flame',
+  }
+  const sensorType = reverseMap[dataKey] || dataKey
+  return readings
+    .filter((r) => r.sensor_type === sensorType)
+    .map((r) => ({ timestamp: r.timestamp, [dataKey]: r.value }))
 }

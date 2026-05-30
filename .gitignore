@@ -32,3 +32,6 @@ NodeAlert-Backend/.venv/
 # Frontend dependencies and build (rebuilt via Docker on deploy)
 NodeAlert-Frontend/node_modules/
 NodeAlert-Frontend/dist/
+
+# Environment variables (local config, NO commits)
+.env

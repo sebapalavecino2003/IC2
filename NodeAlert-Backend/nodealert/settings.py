@@ -7,12 +7,13 @@ y CORS. La configuración está orientada a ejecución en contenedores
 Docker con valores hardcodeados para el entorno de desarrollo/
 demostración.
 """
+import os
 import sys
 from pathlib import Path
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 
-SECRET_KEY = 'contraseña'
+SECRET_KEY = os.environ.get('DJANGO_SECRET_KEY', 'django-insecure-nodealert-mvp-dev-key-2025')
 
 DEBUG = True
 
@@ -76,11 +77,11 @@ WSGI_APPLICATION = 'nodealert.wsgi.application'
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.mysql',
-        'NAME': 'nodealert',
-        'USER': 'nodealert',
-        'PASSWORD': 'nodealert',
-        'HOST': 'mysql',
-        'PORT': '3306',
+        'NAME': os.environ.get('MYSQL_DATABASE', 'nodealert'),
+        'USER': os.environ.get('MYSQL_USER', 'nodealert'),
+        'PASSWORD': os.environ.get('MYSQL_PASSWORD', 'db_password'),
+        'HOST': os.environ.get('MYSQL_HOST', 'mysql'),
+        'PORT': os.environ.get('MYSQL_PORT', '3306'),
         'OPTIONS': {
             'init_command': "SET sql_mode='STRICT_TRANS_TABLES'",
         },
@@ -90,8 +91,8 @@ DATABASES = {
 # En tests, usar root para evitar problemas de permisos con las
 # migraciones de test que Django ejecuta.
 if 'test' in sys.argv:
-    DATABASES['default']['USER'] = 'root'
-    DATABASES['default']['PASSWORD'] = 'root_password'
+    DATABASES['default']['USER'] = os.environ.get('MYSQL_ROOT_USER', 'root')
+    DATABASES['default']['PASSWORD'] = os.environ.get('MYSQL_ROOT_PASSWORD', 'root_password')
 
 
 # Validadores de contraseña de Django.

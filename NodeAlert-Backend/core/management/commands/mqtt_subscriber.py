@@ -11,15 +11,15 @@ Maneja correctamente las señales SIGTERM y SIGINT para una
 desconexión limpia del broker MQTT.
 """
 import json
+import os
 import signal
 import sys
-from datetime import datetime
+from datetime import datetime, timedelta
 
 from django.core.management.base import BaseCommand
 from django.db import transaction
 from django.utils import timezone
 from django.utils.dateparse import parse_datetime
-
 import paho.mqtt.client as mqtt
 
 from core.models import Device, Reading, Event
@@ -68,8 +68,8 @@ class Command(BaseCommand):
         broker = 'mosquitto'
         port = 1883
         keepalive = 60
-        sub_user = 'mqtt_subscriber'
-        sub_pass = 'test_password'
+        sub_user = os.environ.get('MQTT_SUBSCRIBER_USER', 'mqtt_subscriber')
+        sub_pass = os.environ.get('MQTT_SUBSCRIBER_PASSWORD', 'test_password')
 
         self._client = mqtt.Client(mqtt.CallbackAPIVersion.VERSION2)
         self._client.username_pw_set(sub_user, sub_pass)
@@ -202,9 +202,41 @@ class Command(BaseCommand):
             with transaction.atomic():
                 Reading.objects.bulk_create(readings)
 
+        # Actualizar last_seen del dispositivo con cada telemetría.
+        if device.last_seen is None or device.last_seen < timestamp:
+            device.last_seen = timestamp
+            device.save(update_fields=['last_seen'])
+
+        # Auto-crear eventos cuando las alarmas del firmware están activas.
+        self._check_alarms(device, payload, timestamp)
+
         self.stdout.write(
             f'[TELEMETRY] {device_id}: {len(readings)} readings at '
             f'{timestamp.isoformat()}')
+
+    def _check_alarms(self, device, payload, timestamp):
+        alarm_map = {
+            'alarm_temp': ('temperature', 'threshold_exceeded', 'Temperatura superó el umbral'),
+            'alarm_gas': ('gas', 'gas_leak', 'Concentración de gas superó el umbral'),
+            'alarm_flame': ('flame', 'flame_detected', 'Llama detectada'),
+        }
+        for alarm_key, (event_type, event_label, message) in alarm_map.items():
+            if payload.get(alarm_key):
+                existing = Event.objects.filter(
+                    device=device,
+                    event_type=event_label,
+                    resolved=False,
+                    timestamp__gte=timestamp - timedelta(minutes=5),
+                ).exists()
+                if not existing:
+                    Event.objects.create(
+                        device=device,
+                        event_type=event_label,
+                        severity='critical',
+                        message=message,
+                        timestamp=timestamp,
+                    )
+                    self.stdout.write(f'[ALARM] {device.device_id}: {message}')
 
     def _handle_event(self, topic, payload):
         """

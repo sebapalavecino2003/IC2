@@ -45,6 +45,7 @@ class Device(models.Model):
     mac_address = models.CharField(max_length=17, blank=True, default='')
     location = models.CharField(max_length=200, blank=True, default='')
     is_active = models.BooleanField(default=True)
+    last_seen = models.DateTimeField(null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 

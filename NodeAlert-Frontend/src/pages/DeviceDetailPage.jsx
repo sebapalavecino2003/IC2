@@ -22,7 +22,7 @@ import WhatshotIcon from '@mui/icons-material/Whatshot'
 import AirIcon from '@mui/icons-material/Air'
 import usePolling from '../hooks/usePolling'
 import { getDevice, getReadings, getEvents } from '../services/api'
-import { deviceStatus, statusColor, formatTimestamp } from '../utils/formatters'
+import { deviceStatus, statusColor, formatTimestamp, getSensorValue, readingsForChart } from '../utils/formatters'
 import SensorGauge from '../components/SensorGauge'
 import SensorChart from '../components/SensorChart'
 import ActiveAlerts from '../components/ActiveAlerts'
@@ -60,12 +60,19 @@ export default function DeviceDetailPage() {
   const status = device ? deviceStatus(device.last_seen) : 'offline'
   const color = statusColor(status)
 
-  const latest = readings?.[0] || {}
-  const avgTemp = readings.length
-    ? (readings.reduce((s, r) => s + (r.temperature || 0), 0) / readings.length).toFixed(1)
+  const latest = {
+    temperature: getSensorValue(readings, device?.id, 'temperature'),
+    humidity: getSensorValue(readings, device?.id, 'humidity'),
+    gas_ppm: getSensorValue(readings, device?.id, 'gas'),
+    flame: getSensorValue(readings, device?.id, 'flame'),
+  }
+  const tempReadings = readings.filter((r) => r.sensor_type === 'temperature')
+  const humReadings = readings.filter((r) => r.sensor_type === 'humidity')
+  const avgTemp = tempReadings.length
+    ? (tempReadings.reduce((s, r) => s + r.value, 0) / tempReadings.length).toFixed(1)
     : 0
-  const avgHum = readings.length
-    ? (readings.reduce((s, r) => s + (r.humidity || 0), 0) / readings.length).toFixed(1)
+  const avgHum = humReadings.length
+    ? (humReadings.reduce((s, r) => s + r.value, 0) / humReadings.length).toFixed(1)
     : 0
 
   if (!device) {
@@ -202,7 +209,7 @@ export default function DeviceDetailPage() {
             title="Temperatura"
             dataKey="temperature"
             color="#ff6f00"
-            data={readings}
+            data={readingsForChart(readings, 'temperature')}
             unit="°C"
           />
         </Grid>
@@ -214,7 +221,7 @@ export default function DeviceDetailPage() {
             title="Humedad"
             dataKey="humidity"
             color="#00e5ff"
-            data={readings}
+            data={readingsForChart(readings, 'humidity')}
             unit="%"
           />
         </Grid>
@@ -223,7 +230,7 @@ export default function DeviceDetailPage() {
             title="Gas"
             dataKey="gas_ppm"
             color="#ff1744"
-            data={readings}
+            data={readingsForChart(readings, 'gas_ppm')}
             unit="ppm"
           />
         </Grid>

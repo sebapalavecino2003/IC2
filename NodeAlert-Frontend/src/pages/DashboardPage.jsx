@@ -23,7 +23,7 @@ import WaterDropIcon from '@mui/icons-material/WaterDrop'
 import SearchIcon from '@mui/icons-material/Search'
 import usePolling from '../hooks/usePolling'
 import { getDevices, getReadings, getEvents } from '../services/api'
-import { deviceStatus, statusColor } from '../utils/formatters'
+import { deviceStatus, statusColor, groupLatestReadings, readingsForChart } from '../utils/formatters'
 import DeviceCard from '../components/DeviceCard'
 import ActiveAlerts from '../components/ActiveAlerts'
 import SensorChart from '../components/SensorChart'
@@ -93,11 +93,13 @@ export default function DashboardPage() {
   const criticalCount = events.filter((e) => e.severity === 'critical' && !e.resolved).length
 
   // Promedios de temperatura y humedad desde las últimas lecturas.
-  const avgTemp = readings.length
-    ? (readings.reduce((s, r) => s + (r.temperature || 0), 0) / readings.length).toFixed(1)
+  const tempReadings = readings.filter((r) => r.sensor_type === 'temperature')
+  const humReadings = readings.filter((r) => r.sensor_type === 'humidity')
+  const avgTemp = tempReadings.length
+    ? (tempReadings.reduce((s, r) => s + r.value, 0) / tempReadings.length).toFixed(1)
     : '—'
-  const avgHum = readings.length
-    ? (readings.reduce((s, r) => s + (r.humidity || 0), 0) / readings.length).toFixed(1)
+  const avgHum = humReadings.length
+    ? (humReadings.reduce((s, r) => s + r.value, 0) / humReadings.length).toFixed(1)
     : '—'
 
   // Filtrar dispositivos por búsqueda textual y estado.
@@ -111,14 +113,8 @@ export default function DashboardPage() {
     return matchesSearch && matchesFilter
   })
 
-  // Última lectura disponible por dispositivo (para mostrar en tarjetas).
-  const latestReadings = (() => {
-    const map = {}
-    readings.forEach((r) => {
-      if (!map[r.device_id]) map[r.device_id] = r
-    })
-    return Object.values(map)
-  })()
+  // Últimas lecturas por dispositivo en formato plano para las tarjetas.
+  const latestReadings = groupLatestReadings(readings)
 
   return (
     <Box>
@@ -213,7 +209,7 @@ export default function DashboardPage() {
             title="Temperatura"
             dataKey="temperature"
             color="#ff6f00"
-            data={readings.slice(0, 100)}
+            data={readingsForChart(readings, 'temperature').slice(0, 100)}
             unit="°C"
           />
         </Grid>
@@ -225,7 +221,7 @@ export default function DashboardPage() {
             title="Humedad"
             dataKey="humidity"
             color="#00e5ff"
-            data={readings.slice(0, 100)}
+            data={readingsForChart(readings, 'humidity').slice(0, 100)}
             unit="%"
           />
         </Grid>
@@ -234,7 +230,7 @@ export default function DashboardPage() {
             title="Gas (ppm)"
             dataKey="gas_ppm"
             color="#ff1744"
-            data={readings.slice(0, 100)}
+            data={readingsForChart(readings, 'gas_ppm').slice(0, 100)}
             unit="ppm"
           />
         </Grid>

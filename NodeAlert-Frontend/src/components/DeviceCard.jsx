@@ -18,8 +18,8 @@ export default function DeviceCard({ device, readings, events }) {
   const status = deviceStatus(device.last_seen)
   const color = statusColor(status)
 
-  const deviceReadings = readings?.find((r) => r.device_id === device.device_id)
-  const activeAlerts = events?.filter((e) => !e.resolved && e.device_id === device.device_id)?.length || 0
+  const deviceReadings = readings?.find((r) => r.device === device.id)
+  const activeAlerts = events?.filter((e) => !e.resolved && e.device === device.id)?.length || 0
 
   return (
     <Card
@@ -32,7 +32,7 @@ export default function DeviceCard({ device, readings, events }) {
           boxShadow: `0 4px 20px ${color}30`,
         },
       }}
-      onClick={() => navigate(`/device/${device.id || device.device_id}`)}
+      onClick={() => navigate(`/device/${device.device_id}`)}
     >
       <CardContent>
         <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: 1 }}>
